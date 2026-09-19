@@ -1,0 +1,12 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+csharp_style_namespace_declarations = file_scoped:error
+dotnet_style_require_accessibility_modifiers = always:error
+dotnet_diagnostic.CA2007.severity = none
