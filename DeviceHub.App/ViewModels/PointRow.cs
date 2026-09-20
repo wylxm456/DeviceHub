@@ -26,7 +26,8 @@ public partial class PointRow : ObservableObject
 
     public void Update(double? value, PointQuality quality, DateTime timestamp)
     {
-        Value = value;
+        // 行模型是纯显示层：数值统一收敛到 3 位小数，S7 Real 的原始精度不进界面
+        Value = value is null ? null : Math.Round(value.Value, 3);
         Quality = quality.ToString();
         UpdateTime = timestamp.ToString("HH:mm:ss.fff");
     }

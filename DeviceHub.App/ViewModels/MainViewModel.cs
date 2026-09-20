@@ -57,6 +57,11 @@ public partial class MainViewModel : ObservableObject
         IsBusy = true;
         try
         {
+            // 新连接先清掉上一台设备留下的行：既避免旧点位残留，
+            // 也避免新旧设备同名点位（都叫"温度"）在内部字典里互相顶替
+            Points.Clear();
+            _rowsByName.Clear();
+
             _driver = DeviceDriverFactory.Create(device);
             await _driver.ConnectAsync();
 
