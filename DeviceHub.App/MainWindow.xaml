@@ -6,6 +6,11 @@
         WindowStartupLocation="CenterScreen">
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10,10,10,6">
+            <TextBlock Text="设备：" VerticalAlignment="Center" Margin="0,0,4,0" />
+            <ComboBox ItemsSource="{Binding Devices}"
+                      SelectedItem="{Binding SelectedDevice}"
+                      DisplayMemberPath="Name"
+                      Width="230" VerticalContentAlignment="Center" Margin="0,0,10,0" />
             <Button Content="连接并开始采集"
                     Command="{Binding ConnectCommand}"
                     Padding="16,6" Margin="0,0,8,0" />
