@@ -17,32 +17,38 @@
 | M3 北向对接 | OPC UA Server、MQTT 发布（MQTTnet）、Linux 虚拟机部署验证 | ⏳ |
 | M4 亮点 | InfluxDB 时序库、内置 Modbus 模拟器、脚本引擎（任选） | ⏳ |
 
+M1 进度：**S7 驱动已打通**——自研 [DeviceHub.Simulator](DeviceHub.Simulator/)（基于 snap7 Server API 的 S7 从站模拟器）作为被采集设备，S7NetPlus 驱动经真实 S7 协议栈读写 DB1，端到端集成测试覆盖"连接—批量读—写设定值—物理响应"。对接真机/PLCSIM 时仅需更换连接参数（IP/Rack/Slot/CPU 类型）。
+
 ## 技术栈
 
 - .NET 10 / C# / WPF（CommunityToolkit.Mvvm）
-- S7NetPlus · NModbus · OPCFoundation.NetStandard · MQTTnet（按里程碑逐步引入）
+- S7NetPlus（S7 客户端）· snap7（自研 S7 从站模拟器）· NModbus · OPCFoundation.NetStandard · MQTTnet（按里程碑逐步引入）
 - SQLite + Dapper · Serilog · xUnit
 
 ## 快速开始
 
 ```bash
 dotnet build
-dotnet run --project DeviceHub.App        # 或用 Visual Studio 打开 DeviceHub.sln 按 F5
-dotnet test                               # 运行单元测试
+dotnet run --project DeviceHub.App        # 或用 Visual Studio 打开 DeviceHub.slnx 按 F5
+dotnet test                               # 运行单元测试（含 S7 协议端到端集成测试）
+
+# 可选：独立启动 S7 从站模拟器（模拟一台 S7-300，127.0.0.1:102，Rack 0 / Slot 2）
+dotnet run --project DeviceHub.Simulator
 ```
 
-当前版本使用内置的**模拟驱动**（无需任何硬件）：点击"连接并开始采集"即可看到
-温度/压力/设定值三个点位以 500ms 周期刷新。
+当前版本的界面仍使用内置 SimulatedDriver（无任何依赖即点即用）；
+S7 链路已由集成测试验证，M1 后续把驱动切换接入界面配置。
 
 ## 目录结构
 
 ```
 DeviceHub/
-├── DeviceHub.Core/      # 抽象与模型：IDeviceDriver、点位、采集引擎
-├── DeviceHub.Drivers/   # 驱动实现：Simulated（M1 增 S7 / Modbus）
-├── DeviceHub.App/       # WPF 界面（MVVM）
-├── DeviceHub.Tests/     # xUnit 单元测试
-└── docs/                # 设计文档（架构、里程碑）
+├── DeviceHub.Core/        # 抽象与模型：IDeviceDriver、点位、采集引擎
+├── DeviceHub.Drivers/     # 驱动实现：Simulated、S7（S7NetPlus）；M1 增 Modbus
+├── DeviceHub.Simulator/   # 自研 S7 从站模拟器（snap7 Server API + 物理模型）
+├── DeviceHub.App/         # WPF 界面（MVVM）
+├── DeviceHub.Tests/       # xUnit 单元测试 + S7 端到端集成测试
+└── docs/                  # 设计文档（架构、里程碑）
 ```
 
 ## 核心设计

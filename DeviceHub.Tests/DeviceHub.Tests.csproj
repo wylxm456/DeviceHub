@@ -5,7 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 集成测试在测试进程内启动 snap7 仿真服务器，需要原生库随测试输出 -->
+    <None Include="..\DeviceHub.Simulator\libs\snap7.dll" Link="snap7.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
@@ -21,6 +27,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DeviceHub.Core\DeviceHub.Core.csproj" />
     <ProjectReference Include="..\DeviceHub.Drivers\DeviceHub.Drivers.csproj" />
+    <ProjectReference Include="..\DeviceHub.Simulator\DeviceHub.Simulator.csproj" />
   </ItemGroup>
 
 </Project>
