@@ -27,6 +27,13 @@ public partial class AxisViewModel : ObservableObject
     [ObservableProperty]
     private string _stateText = "未回零";
 
+    /// <summary>实时运动标志，仿真画布用它做状态变色。</summary>
+    [ObservableProperty]
+    private bool _isMoving;
+
+    [ObservableProperty]
+    private bool _isHomed;
+
     [ObservableProperty]
     private string _targetInput = "0";
 
@@ -46,6 +53,8 @@ public partial class AxisViewModel : ObservableObject
     public void UpdateFrom(AxisStatus status)
     {
         Position = status.Position;
+        IsMoving = status.IsMoving;
+        IsHomed = status.IsHomed;
 
         var state = status.IsMoving ? "运动中" : status.IsHomed ? "就绪" : "未回零";
         if (status.Alarm || status.PositiveLimitTriggered || status.NegativeLimitTriggered)
@@ -73,11 +82,12 @@ public partial class AxisViewModel : ObservableObject
     [RelayCommand]
     private Task StopAsync() => RunAsync(() => _control.StopAsync(AxisId));
 
-    [RelayCommand]
-    private Task JogPositiveAsync() => RunAsync(() => _control.JogStartAsync(AxisId, ParseSpeed(), +1));
+    /// <summary>按住即动：鼠标按下触发（由视图的 MouseDown 事件调用）。</summary>
+    public Task JogHoldAsync(int direction) =>
+        RunAsync(() => _control.JogStartAsync(AxisId, ParseSpeed(), direction));
 
-    [RelayCommand]
-    private Task JogNegativeAsync() => RunAsync(() => _control.JogStartAsync(AxisId, ParseSpeed(), -1));
+    /// <summary>松开即停（由视图的 MouseUp 事件调用）。</summary>
+    public Task JogHoldStopAsync() => RunAsync(() => _control.JogStopAsync(AxisId));
 
     [RelayCommand]
     private Task MoveAbsoluteAsync() =>
@@ -135,6 +145,20 @@ public partial class MotionViewModel : ObservableObject
 
     public ObservableCollection<AxisViewModel> Axes { get; } = [];
 
+    /// <summary>仿真画布按约定轴号取轴：0=X（水平）、1=Y（垂直）、2=Z（升降）。</summary>
+    public AxisViewModel? XAxis => Axes.FirstOrDefault(a => a.AxisId == 0);
+
+    public AxisViewModel? YAxis => Axes.FirstOrDefault(a => a.AxisId == 1);
+
+    public AxisViewModel? ZAxis => Axes.FirstOrDefault(a => a.AxisId == 2);
+
+    private void RaiseAxisLookups()
+    {
+        OnPropertyChanged(nameof(XAxis));
+        OnPropertyChanged(nameof(YAxis));
+        OnPropertyChanged(nameof(ZAxis));
+    }
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ConnectCommand))]
     [NotifyCanExecuteChangedFor(nameof(DisconnectCommand))]
@@ -171,6 +195,7 @@ public partial class MotionViewModel : ObservableObject
                 Axes.Add(new AxisViewModel(_control, axisConfig));
             }
 
+            RaiseAxisLookups();
             _pollTimer.Start();
             StatusText = $"已连接：{_config.Name}（{_config.DriverType}），{_config.Axes.Count} 轴";
         }
@@ -202,6 +227,7 @@ public partial class MotionViewModel : ObservableObject
             }
 
             Axes.Clear();
+            RaiseAxisLookups();
             StatusText = "运动控制已断开";
         }
         finally

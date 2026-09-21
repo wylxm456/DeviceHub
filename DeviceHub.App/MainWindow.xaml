@@ -1,8 +1,9 @@
 <Window x:Class="DeviceHub.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:DeviceHub.App.Views"
         Title="DeviceHub — 多协议设备采集与监控平台"
-        Height="680" Width="1180"
+        Height="720" Width="1280"
         WindowStartupLocation="CenterScreen">
     <TabControl>
         <TabItem x:Name="AcquisitionTab" Header="设备采集">
@@ -68,52 +69,66 @@
                            Margin="0,8,0,0"
                            TextWrapping="Wrap" />
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Axes}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <GroupBox Header="{Binding Name}" Width="230" Margin="0,0,10,10" Padding="8">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Position, StringFormat=位置：{}{0:0.###} mm}"
-                                                   FontSize="20" FontWeight="Bold" Margin="0,0,0,4" />
-                                        <TextBlock Text="{Binding StateText}" Foreground="#337AB7" Margin="0,0,0,8" />
-                                        <UniformGrid Columns="2">
-                                            <Button Content="回零" Command="{Binding HomeCommand}"
-                                                    Padding="0,6" Margin="0,0,4,4" />
-                                            <Button Content="停止" Command="{Binding StopCommand}"
-                                                    Padding="0,6" Margin="4,0,0,4" />
-                                        </UniformGrid>
-                                        <UniformGrid Columns="2">
-                                            <Button Content="Jog ◀" Command="{Binding JogNegativeCommand}"
-                                                    Padding="0,6" Margin="0,0,4,8" />
-                                            <Button Content="Jog ▶" Command="{Binding JogPositiveCommand}"
-                                                    Padding="0,6" Margin="4,0,0,8" />
-                                        </UniformGrid>
-                                        <UniformGrid Columns="2" Margin="0,0,0,4">
-                                            <StackPanel Margin="0,0,4,0">
-                                                <TextBlock Text="目标(mm)" FontSize="11" />
-                                                <TextBox Text="{Binding TargetInput, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                            <StackPanel Margin="4,0,0,0">
-                                                <TextBlock Text="速度(mm/s)" FontSize="11" />
-                                                <TextBox Text="{Binding SpeedInput, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                        </UniformGrid>
-                                        <Button Content="定位运动" Command="{Binding MoveAbsoluteCommand}" Padding="0,6" />
-                                        <TextBlock Text="{Binding ErrorText}"
-                                                   Foreground="#D9534F" FontSize="11"
-                                                   TextWrapping="Wrap" Margin="0,4,0,0" />
-                                    </StackPanel>
-                                </GroupBox>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Axes}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <GroupBox Header="{Binding Name}" Width="230" Margin="0,0,10,10" Padding="8">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Position, StringFormat=位置：{}{0:0.###} mm}"
+                                                       FontSize="20" FontWeight="Bold" Margin="0,0,0,4" />
+                                            <TextBlock Text="{Binding StateText}" Foreground="#337AB7" Margin="0,0,0,8" />
+                                            <UniformGrid Columns="2">
+                                                <Button Content="回零" Command="{Binding HomeCommand}"
+                                                        Padding="0,6" Margin="0,0,4,4" />
+                                                <Button Content="停止" Command="{Binding StopCommand}"
+                                                        Padding="0,6" Margin="4,0,0,4" />
+                                            </UniformGrid>
+                                            <UniformGrid Columns="2">
+                                                <Button Content="Jog ◀ 按住" Tag="-1"
+                                                        PreviewMouseLeftButtonDown="JogButton_Down"
+                                                        PreviewMouseLeftButtonUp="JogButton_Up"
+                                                        Padding="0,6" Margin="0,0,4,8" />
+                                                <Button Content="Jog ▶ 按住" Tag="1"
+                                                        PreviewMouseLeftButtonDown="JogButton_Down"
+                                                        PreviewMouseLeftButtonUp="JogButton_Up"
+                                                        Padding="0,6" Margin="4,0,0,8" />
+                                            </UniformGrid>
+                                            <UniformGrid Columns="2" Margin="0,0,0,4">
+                                                <StackPanel Margin="0,0,4,0">
+                                                    <TextBlock Text="目标(mm)" FontSize="11" />
+                                                    <TextBox Text="{Binding TargetInput, UpdateSourceTrigger=PropertyChanged}" />
+                                                </StackPanel>
+                                                <StackPanel Margin="4,0,0,0">
+                                                    <TextBlock Text="速度(mm/s)" FontSize="11" />
+                                                    <TextBox Text="{Binding SpeedInput, UpdateSourceTrigger=PropertyChanged}" />
+                                                </StackPanel>
+                                            </UniformGrid>
+                                            <Button Content="定位运动" Command="{Binding MoveAbsoluteCommand}" Padding="0,6" />
+                                            <TextBlock Text="{Binding ErrorText}"
+                                                       Foreground="#D9534F" FontSize="11"
+                                                       TextWrapping="Wrap" Margin="0,4,0,0" />
+                                        </StackPanel>
+                                    </GroupBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <views:MotionCanvasView Grid.Column="1" Width="480" Margin="6,0,0,0"
+                                            VerticalAlignment="Top" />
+                </Grid>
             </DockPanel>
         </TabItem>
     </TabControl>

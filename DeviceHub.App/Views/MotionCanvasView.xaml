@@ -1,0 +1,55 @@
+<UserControl x:Class="DeviceHub.App.Views.MotionCanvasView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border BorderBrush="#CCCCCC" BorderThickness="1" Background="White">
+        <Grid Margin="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <DockPanel Grid.Row="0" Margin="0,0,0,6">
+                <TextBlock Text="运动仿真视图（俯视 X-Y 平面）"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <Button Content="清除轨迹"
+                        DockPanel.Dock="Right"
+                        HorizontalAlignment="Right"
+                        Padding="10,3"
+                        Click="ClearTrail_Click" />
+            </DockPanel>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Canvas x:Name="FieldCanvas" Width="400" Height="400" VerticalAlignment="Top">
+                    <!-- 网格/轨迹/平台由代码绘制（自定义绘制属于视图职责） -->
+                    <TextBlock x:Name="EmptyHint"
+                               Text="连接控制卡后显示轴运动仿真"
+                               Foreground="#999999"
+                               HorizontalAlignment="Center"
+                               IsHitTestVisible="False" />
+                </Canvas>
+
+                <!-- Z 轴侧视高度条：底端对齐，随 Z 位置从下往上长 -->
+                <StackPanel Grid.Column="1" Margin="14,0,0,0" Width="40">
+                    <TextBlock Text="Z" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                    <Grid Height="400" Width="26">
+                        <Rectangle Fill="#F0F0F0" Stroke="#CCCCCC" />
+                        <Rectangle x:Name="ZBar" Fill="#4A89DC" Height="0"
+                                   VerticalAlignment="Bottom"
+                                   HorizontalAlignment="Stretch" />
+                    </Grid>
+                    <TextBlock Text="0" HorizontalAlignment="Center" Margin="0,4,0,0" FontSize="10" />
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" Text="▲100mm"
+                           VerticalAlignment="Top" Margin="14,-4,0,0"
+                           FontSize="10" Foreground="#888888" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>
