@@ -5,9 +5,10 @@ namespace DeviceHub.App;
 
 public partial class MainWindow : Window
 {
-    public MainWindow(MainViewModel viewModel)
+    public MainWindow(MainViewModel mainViewModel, MotionViewModel motionViewModel)
     {
         InitializeComponent();
-        DataContext = viewModel;
+        AcquisitionTab.DataContext = mainViewModel;
+        MotionTab.DataContext = motionViewModel;
     }
 }

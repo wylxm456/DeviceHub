@@ -66,3 +66,33 @@ public sealed class HubOptions
 {
     public List<DeviceConfig> Devices { get; set; } = [];
 }
+
+/// <summary>运动控制轴配置。</summary>
+public sealed class MotionAxisConfig
+{
+    public int Id { get; set; }
+
+    /// <summary>轴显示名，如 "X轴"。</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>正软限位（mm）。指令目标超出即拒绝。</summary>
+    public double SoftLimitPositive { get; set; } = 300;
+
+    /// <summary>负软限位（mm）。</summary>
+    public double SoftLimitNegative { get; set; } = -300;
+
+    /// <summary>默认速度（mm/s），界面定位运动的预填值。</summary>
+    public double DefaultSpeed { get; set; } = 50;
+}
+
+/// <summary>运动控制卡配置（绑定 appsettings.json 的 Motion 节）。</summary>
+public sealed class MotionConfig
+{
+    /// <summary>控制卡显示名。</summary>
+    public string Name { get; set; } = "运动控制";
+
+    /// <summary>实现类型：SimMotion（模拟卡；雷赛等真卡在后续里程碑加入）。</summary>
+    public string DriverType { get; set; } = "SimMotion";
+
+    public List<MotionAxisConfig> Axes { get; set; } = [];
+}

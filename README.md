@@ -15,7 +15,8 @@
 | M1 采集核心 | S7NetPlus + NModbus 真实驱动、JSON 点位配置、Generic Host + DI、LiveCharts 曲线 | 🚧 |
 | M2 商业模块 | 报警引擎、SQLite 历史数据、用户权限、Excel 导出 | ⏳ |
 | M3 北向对接 | OPC UA Server、MQTT 发布（MQTTnet）、Linux 虚拟机部署验证 | ⏳ |
-| M4 亮点 | InfluxDB 时序库、内置 Modbus 模拟器、脚本引擎（任选） | ⏳ |
+| M4 亮点 | InfluxDB 时序库、内置 Modbus 模拟器（迷你版已随测试交付）、脚本引擎（任选） | ⏳ |
+| M5 运动控制 | IMotionControl 抽象 + 模拟运动卡（回零/Jog/定位/直线插补/软限位/急停）+ 轴控界面；雷赛真卡实现待接入 | ✅ 核心交付 |
 
 M1 进度：**双真实协议打通并接入界面**——
 - 自研 [DeviceHub.Simulator](DeviceHub.Simulator/)：S7 从站模拟器（snap7 Server API）+ 迷你 Modbus TCP 从站（测试用）；

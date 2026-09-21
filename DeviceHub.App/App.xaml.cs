@@ -33,11 +33,15 @@ public partial class App : Application
 
         var builder = Host.CreateApplicationBuilder();
         builder.Services.Configure<HubOptions>(builder.Configuration.GetSection("Hub"));
+        builder.Services.Configure<MotionConfig>(builder.Configuration.GetSection("Motion"));
         builder.Services.AddSingleton<MainViewModel>();
+        builder.Services.AddSingleton<MotionViewModel>();
 
         _host = builder.Build();
 
-        var mainWindow = new MainWindow(_host.Services.GetRequiredService<MainViewModel>());
+        var mainWindow = new MainWindow(
+            _host.Services.GetRequiredService<MainViewModel>(),
+            _host.Services.GetRequiredService<MotionViewModel>());
         MainWindow = mainWindow;
         mainWindow.Show();
     }
