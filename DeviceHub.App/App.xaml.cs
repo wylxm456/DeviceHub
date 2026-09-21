@@ -35,16 +35,19 @@ public partial class App : Application
         builder.Services.Configure<HubOptions>(builder.Configuration.GetSection("Hub"));
         builder.Services.Configure<MotionConfig>(builder.Configuration.GetSection("Motion"));
         builder.Services.Configure<VisionConfig>(builder.Configuration.GetSection("Vision"));
+        builder.Services.Configure<CurveConfig>(builder.Configuration.GetSection("Curve"));
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddSingleton<MotionViewModel>();
         builder.Services.AddSingleton<VisionViewModel>();
+        builder.Services.AddSingleton<CurveViewModel>();
 
         _host = builder.Build();
 
         var mainWindow = new MainWindow(
             _host.Services.GetRequiredService<MainViewModel>(),
             _host.Services.GetRequiredService<MotionViewModel>(),
-            _host.Services.GetRequiredService<VisionViewModel>());
+            _host.Services.GetRequiredService<VisionViewModel>(),
+            _host.Services.GetRequiredService<CurveViewModel>());
         MainWindow = mainWindow;
         mainWindow.Show();
     }

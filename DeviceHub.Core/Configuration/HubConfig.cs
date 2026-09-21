@@ -97,6 +97,16 @@ public sealed class MotionConfig
     public List<MotionAxisConfig> Axes { get; set; } = [];
 }
 
+/// <summary>实时曲线页配置（绑定 appsettings.json 的 Curve 节）。</summary>
+public sealed class CurveConfig
+{
+    /// <summary>
+    /// 每个点位保留的最大采样数（滚动窗口长度）。
+    /// 500ms 采集周期 × 300 点 ≈ 2.5 分钟的趋势，长挂不涨内存。
+    /// </summary>
+    public int MaxPoints { get; set; } = 300;
+}
+
 /// <summary>合成相机配置（视觉引导的仿真取流来源）。</summary>
 public sealed class VisionConfig
 {

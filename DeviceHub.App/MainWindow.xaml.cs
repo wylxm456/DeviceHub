@@ -10,12 +10,14 @@ public partial class MainWindow : Window
     public MainWindow(
         MainViewModel mainViewModel,
         MotionViewModel motionViewModel,
-        VisionViewModel visionViewModel)
+        VisionViewModel visionViewModel,
+        CurveViewModel curveViewModel)
     {
         InitializeComponent();
         AcquisitionTab.DataContext = mainViewModel;
         MotionTab.DataContext = motionViewModel;
         VisionTab.DataContext = visionViewModel;
+        CurveTab.DataContext = curveViewModel;
     }
 
     /// <summary>Jog 按住即动：按下启动连续运动（Tag 是方向 ±1）。</summary>

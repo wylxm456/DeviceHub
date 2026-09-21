@@ -27,6 +27,15 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<PointRow> Points { get; } = [];
 
+    /// <summary>采集开始（UI 线程），参数是本次采集的点位表——曲线页据此重建序列。</summary>
+    public event Action<IReadOnlyList<PointDefinition>>? AcquisitionStarted;
+
+    /// <summary>一个点位读到新值（UI 线程）——曲线页等第二个消费者从这里取数，不再自己碰引擎。</summary>
+    public event Action<PointValue>? PointUpdated;
+
+    /// <summary>采集停止（UI 线程）。</summary>
+    public event Action? AcquisitionStopped;
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ConnectCommand))]
     private DeviceConfig? _selectedDevice;
@@ -83,6 +92,7 @@ public partial class MainViewModel : ObservableObject
 
             _connected = true;
             StatusText = $"采集中：{device.Name}（{device.DriverType}）@ {device.PollIntervalMs}ms";
+            AcquisitionStarted?.Invoke(points);
         }
         catch
         {
@@ -126,6 +136,7 @@ public partial class MainViewModel : ObservableObject
 
             _connected = false;
             StatusText = "已停止采集";
+            AcquisitionStopped?.Invoke();
         }
         finally
         {
@@ -140,13 +151,16 @@ public partial class MainViewModel : ObservableObject
 
     private void OnPointRead(PointValue value)
     {
-        // 事件来自线程池线程，切回 UI 线程再动 ObservableCollection
+        // 事件来自线程池线程，切回 UI 线程再动 ObservableCollection；
+        // PointUpdated 也在切回之后发布——消费方拿到的必然是 UI 线程事件，不必再自己切换
         _uiContext?.Post(_ =>
         {
             if (_rowsByName.TryGetValue(value.Name, out var row))
             {
                 row.Update(value.Value, value.Quality, value.Timestamp);
             }
+
+            PointUpdated?.Invoke(value);
         }, null);
     }
 
