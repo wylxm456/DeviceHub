@@ -16,7 +16,8 @@
 | M2 商业模块 | 报警引擎、SQLite 历史数据、用户权限、Excel 导出 | ⏳ |
 | M3 北向对接 | OPC UA Server、MQTT 发布（MQTTnet）、Linux 虚拟机部署验证 | ⏳ |
 | M4 亮点 | InfluxDB 时序库、内置 Modbus 模拟器（迷你版已随测试交付）、脚本引擎（任选） | ⏳ |
-| M5 运动控制 | IMotionControl 抽象 + 模拟运动卡（回零/Jog/定位/直线插补/软限位/急停）+ 轴控界面；雷赛真卡实现待接入 | ✅ 核心交付 |
+| M5 运动控制 | IMotionControl 抽象 + 模拟运动卡（回零/Jog/定位/直线插补/软限位/急停）+ 轴控界面 + 运动仿真画布 | ✅ |
+| M6 视觉定位 | 合成相机 + 轮廓定位器 + 九点标定（最小二乘仿射）+ **视觉引导运动闭环**（定位→换算→轴走位） | ✅ |
 
 M1 进度：**双真实协议打通并接入界面**——
 - 自研 [DeviceHub.Simulator](DeviceHub.Simulator/)：S7 从站模拟器（snap7 Server API）+ 迷你 Modbus TCP 从站（测试用）；
@@ -28,8 +29,9 @@ M1 进度：**双真实协议打通并接入界面**——
 ## 技术栈
 
 - .NET 10 / C# / WPF（CommunityToolkit.Mvvm）
-- S7NetPlus（S7 客户端）· snap7（自研 S7 从站模拟器）· NModbus · OPCFoundation.NetStandard · MQTTnet（按里程碑逐步引入）
-- SQLite + Dapper · Serilog · xUnit
+- S7NetPlus（S7 客户端）· snap7（自研 S7 从站模拟器）· NModbus（Modbus TCP 驱动）· Modbus TCP 迷你从站模拟器
+- OpenCvSharp4（视觉定位与九点标定）
+- SQLite + Dapper · Serilog · xUnit · Generic Host + DI
 
 ## 快速开始
 

@@ -96,3 +96,28 @@ public sealed class MotionConfig
 
     public List<MotionAxisConfig> Axes { get; set; } = [];
 }
+
+/// <summary>合成相机配置（视觉引导的仿真取流来源）。</summary>
+public sealed class VisionConfig
+{
+    /// <summary>图像宽（像素）。</summary>
+    public int ImageWidth { get; set; } = 640;
+
+    /// <summary>图像高（像素）。</summary>
+    public int ImageHeight { get; set; } = 480;
+
+    /// <summary>像素当量：1mm 对应多少像素（即相机的放大倍率）。</summary>
+    public double ScalePxPerMm { get; set; } = 10;
+
+    /// <summary>视场左上角对应的机台世界坐标 X（mm）。</summary>
+    public double WorldOriginX { get; set; } = 0;
+
+    /// <summary>视场左上角对应的机台世界坐标 Y（mm）。</summary>
+    public double WorldOriginY { get; set; } = 0;
+
+    /// <summary>工件尺寸（mm），矩形长边。</summary>
+    public double WorkpieceLengthMm { get; set; } = 4.0;
+
+    /// <summary>工件尺寸（mm），矩形短边。</summary>
+    public double WorkpieceWidthMm { get; set; } = 3.0;
+}

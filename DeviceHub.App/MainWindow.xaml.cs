@@ -7,11 +7,15 @@ namespace DeviceHub.App;
 
 public partial class MainWindow : Window
 {
-    public MainWindow(MainViewModel mainViewModel, MotionViewModel motionViewModel)
+    public MainWindow(
+        MainViewModel mainViewModel,
+        MotionViewModel motionViewModel,
+        VisionViewModel visionViewModel)
     {
         InitializeComponent();
         AcquisitionTab.DataContext = mainViewModel;
         MotionTab.DataContext = motionViewModel;
+        VisionTab.DataContext = visionViewModel;
     }
 
     /// <summary>Jog 按住即动：按下启动连续运动（Tag 是方向 ±1）。</summary>

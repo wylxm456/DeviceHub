@@ -143,6 +143,9 @@ public partial class MotionViewModel : ObservableObject
     private IMotionControl? _control;
     private bool _polling;
 
+    /// <summary>当前已连接的控制卡实例（视觉引导等其他模块需要驱动轴时从这里取）。</summary>
+    public IMotionControl? CurrentControl => _control;
+
     public ObservableCollection<AxisViewModel> Axes { get; } = [];
 
     /// <summary>仿真画布按约定轴号取轴：0=X（水平）、1=Y（垂直）、2=Z（升降）。</summary>

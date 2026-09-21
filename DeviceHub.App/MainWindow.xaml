@@ -131,5 +131,61 @@
                 </Grid>
             </DockPanel>
         </TabItem>
+        <TabItem x:Name="VisionTab" Header="视觉定位">
+            <DockPanel Margin="10">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
+                    <Button Content="连接相机"
+                            Command="{Binding ConnectCameraCommand}"
+                            Padding="16,6" Margin="0,0,8,0" />
+                    <Button Content="断开相机"
+                            Command="{Binding DisconnectCameraCommand}"
+                            Padding="16,6" Margin="0,0,8,0" />
+                    <Button Content="单帧定位"
+                            Command="{Binding LocateCommand}"
+                            Padding="16,6" Margin="0,0,8,0" />
+                    <Button Content="九点标定"
+                            Command="{Binding CalibrateCommand}"
+                            Padding="16,6" Margin="0,0,8,0" />
+                    <Button Content="视觉引导运动"
+                            Command="{Binding GuidedMoveCommand}"
+                            Padding="16,6"
+                            Background="#337AB7" Foreground="White" FontWeight="Bold" />
+                    <TextBlock Text="{Binding StatusText}"
+                               VerticalAlignment="Center"
+                               Margin="16,0,0,0"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+
+                <TextBlock DockPanel.Dock="Bottom"
+                           Text="{Binding ErrorMessage}"
+                           Foreground="#D9534F"
+                           Margin="0,8,0,0"
+                           TextWrapping="Wrap" />
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" BorderBrush="#CCCCCC" BorderThickness="1" VerticalAlignment="Top">
+                        <Image Source="{Binding CameraImage}" Width="640" Height="480" Stretch="Fill" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Margin="16,0,0,0">
+                        <GroupBox Header="定位结果" Padding="8" Margin="0,0,0,10">
+                            <TextBlock Text="{Binding LocateResultText}" TextWrapping="Wrap" FontSize="14" />
+                        </GroupBox>
+                        <GroupBox Header="标定状态" Padding="8" Margin="0,0,0,10">
+                            <TextBlock Text="{Binding CalibrationText}" TextWrapping="Wrap" FontSize="14" />
+                        </GroupBox>
+                        <GroupBox Header="操作日志" Padding="8">
+                            <ListBox ItemsSource="{Binding LogLines}" Height="220"
+                                     FontFamily="Consolas" FontSize="12" />
+                        </GroupBox>
+                    </StackPanel>
+                </Grid>
+            </DockPanel>
+        </TabItem>
     </TabControl>
 </Window>

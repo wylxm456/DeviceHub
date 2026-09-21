@@ -4,4 +4,5 @@
   <Project Path="DeviceHub.Drivers/DeviceHub.Drivers.csproj" />
   <Project Path="DeviceHub.Simulator/DeviceHub.Simulator.csproj" />
   <Project Path="DeviceHub.Tests/DeviceHub.Tests.csproj" />
+  <Project Path="DeviceHub.Vision/DeviceHub.Vision.csproj" />
 </Solution>

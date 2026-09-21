@@ -28,6 +28,7 @@
     <ProjectReference Include="..\DeviceHub.Core\DeviceHub.Core.csproj" />
     <ProjectReference Include="..\DeviceHub.Drivers\DeviceHub.Drivers.csproj" />
     <ProjectReference Include="..\DeviceHub.Simulator\DeviceHub.Simulator.csproj" />
+    <ProjectReference Include="..\DeviceHub.Vision\DeviceHub.Vision.csproj" />
   </ItemGroup>
 
 </Project>
