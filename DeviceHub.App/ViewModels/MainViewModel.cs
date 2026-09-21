@@ -19,6 +19,7 @@ public partial class MainViewModel : ObservableObject
 {
     private readonly SynchronizationContext? _uiContext = SynchronizationContext.Current;
     private readonly Dictionary<string, PointRow> _rowsByName = new();
+    private readonly ReconnectPolicy _reconnectPolicy;
     private IDeviceDriver? _driver;
     private AcquisitionEngine? _engine;
     private bool _connected;
@@ -48,10 +49,16 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _statusText = "未连接（请选择设备）";
 
-    public MainViewModel(IOptions<HubOptions> options)
+    public MainViewModel(IOptions<HubOptions> options, IOptions<ReconnectConfig> reconnectOptions)
     {
         Devices = options.Value.Devices;
         SelectedDevice = Devices.FirstOrDefault();
+
+        var rc = reconnectOptions.Value;
+        _reconnectPolicy = new ReconnectPolicy(
+            rc.FailureThreshold,
+            TimeSpan.FromMilliseconds(rc.BaseDelayMs),
+            TimeSpan.FromMilliseconds(rc.MaxDelayMs));
     }
 
     [RelayCommand(CanExecute = nameof(CanConnect))]
@@ -85,9 +92,10 @@ public partial class MainViewModel : ObservableObject
             _engine = new AcquisitionEngine(
                 _driver,
                 points,
-                TimeSpan.FromMilliseconds(device.PollIntervalMs));
+                TimeSpan.FromMilliseconds(device.PollIntervalMs),
+                _reconnectPolicy);
             _engine.PointRead += OnPointRead;
-            _engine.ReadFailed += OnReadFailed;
+            _engine.StatusChanged += OnStatusChanged;
             _engine.Start();
 
             _connected = true;
@@ -122,7 +130,7 @@ public partial class MainViewModel : ObservableObject
             if (_engine is not null)
             {
                 _engine.PointRead -= OnPointRead;
-                _engine.ReadFailed -= OnReadFailed;
+                _engine.StatusChanged -= OnStatusChanged;
                 await _engine.DisposeAsync();
                 _engine = null;
             }
@@ -164,8 +172,14 @@ public partial class MainViewModel : ObservableObject
         }, null);
     }
 
-    private void OnReadFailed(Exception ex)
+    private void OnStatusChanged(AcquisitionStatus status)
     {
-        _uiContext?.Post(_ => StatusText = $"读取异常：{ex.Message}", null);
+        // 引擎事件来自后台循环线程，切回 UI 线程再动状态文本
+        _uiContext?.Post(_ =>
+        {
+            StatusText = status.State == AcquisitionState.Reconnecting
+                ? $"采集异常，重连中：第 {status.Attempt} 次，{status.NextRetryDelay.TotalSeconds:0.#}s 后重试（{status.LastError}）"
+                : $"已恢复采集：{SelectedDevice?.Name}";
+        }, null);
     }
 }

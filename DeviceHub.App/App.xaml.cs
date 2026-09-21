@@ -36,6 +36,7 @@ public partial class App : Application
         builder.Services.Configure<MotionConfig>(builder.Configuration.GetSection("Motion"));
         builder.Services.Configure<VisionConfig>(builder.Configuration.GetSection("Vision"));
         builder.Services.Configure<CurveConfig>(builder.Configuration.GetSection("Curve"));
+        builder.Services.Configure<ReconnectConfig>(builder.Configuration.GetSection("Reconnect"));
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddSingleton<MotionViewModel>();
         builder.Services.AddSingleton<VisionViewModel>();

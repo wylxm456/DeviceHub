@@ -97,6 +97,19 @@ public sealed class MotionConfig
     public List<MotionAxisConfig> Axes { get; set; } = [];
 }
 
+/// <summary>断线重连策略配置（绑定 appsettings.json 的 Reconnect 节）。</summary>
+public sealed class ReconnectConfig
+{
+    /// <summary>连续失败多少个采集周期才触发重连：单次网络抖动不值得惊动重连。</summary>
+    public int FailureThreshold { get; set; } = 3;
+
+    /// <summary>首次重试等待（毫秒），之后按指数退避翻倍。</summary>
+    public int BaseDelayMs { get; set; } = 1000;
+
+    /// <summary>重试等待上限（毫秒）：退避必须封顶，恢复后的最大感知延迟才有界。</summary>
+    public int MaxDelayMs { get; set; } = 15000;
+}
+
 /// <summary>实时曲线页配置（绑定 appsettings.json 的 Curve 节）。</summary>
 public sealed class CurveConfig
 {
