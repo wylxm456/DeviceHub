@@ -142,6 +142,13 @@ public partial class CurveViewModel : ObservableObject
         PointOptions = new ObservableCollection<CurvePointOption>(
             points.Select(p => new CurvePointOption(this, p.Name, isVisible: p.DataType != PointDataType.Bool)));
 
+        // 构造器里给 IsVisible 赋初值不经过 setter，OnIsVisibleChanged 不会触发——
+        // 默认可见的点位必须在这里显式创建序列，否则勾选框是"空勾"：看着选了，实际没有曲线
+        foreach (var option in PointOptions.Where(o => o.IsVisible))
+        {
+            SetSeriesVisible(option.Name, visible: true);
+        }
+
         StatusText = $"实时曲线中：{points.Count} 个点位（窗口 {_capacity} 点）";
     }
 
