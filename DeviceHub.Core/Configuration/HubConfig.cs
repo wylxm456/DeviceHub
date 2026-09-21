@@ -46,6 +46,21 @@ public sealed class DeviceConfig
     /// <summary>CPU 型号：S7300 / S7400 / S71200 / S71500。</summary>
     public string? Cpu { get; set; }
 
+    /// <summary>Modbus RTU 串口名（如 COM3），仅 ModbusRtu 驱动需要。</summary>
+    public string? SerialPort { get; set; }
+
+    /// <summary>串口波特率，默认 9600。</summary>
+    public int BaudRate { get; set; } = 9600;
+
+    /// <summary>校验位：None/Odd/Even。Modbus 串行链路规范默认 Even。</summary>
+    public string Parity { get; set; } = "Even";
+
+    /// <summary>数据位，默认 8。</summary>
+    public int DataBits { get; set; } = 8;
+
+    /// <summary>停止位：One/OnePointFive/Two，默认 One。</summary>
+    public string StopBits { get; set; } = "One";
+
     public List<PointConfig> Points { get; set; } = [];
 
     /// <summary>转换为引擎使用的强类型点位表，同时校验数据类型拼写。</summary>

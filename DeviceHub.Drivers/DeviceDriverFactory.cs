@@ -1,3 +1,4 @@
+using System.IO.Ports;
 using DeviceHub.Core.Configuration;
 using DeviceHub.Core.DeviceDriver;
 using DeviceHub.Drivers.Modbus;
@@ -29,7 +30,14 @@ public static class DeviceDriverFactory
                 config.Ip ?? throw new ArgumentException($"Modbus TCP 设备“{config.Name}”缺少 Ip 配置。"),
                 config.Port,
                 config.SlaveId),
-            _ => throw new NotSupportedException($"未知驱动类型：{config.DriverType}（当前支持 Simulated/S7/ModbusTcp）"),
+            "modbusrtu" => new ModbusRtuDriver(
+                config.SerialPort ?? throw new ArgumentException($"Modbus RTU 设备“{config.Name}”缺少 SerialPort 配置。"),
+                config.BaudRate,
+                ParseParity(config),
+                config.DataBits,
+                ParseStopBits(config),
+                config.SlaveId),
+            _ => throw new NotSupportedException($"未知驱动类型：{config.DriverType}（当前支持 Simulated/S7/ModbusTcp/ModbusRtu）"),
         };
     }
 
@@ -41,4 +49,22 @@ public static class DeviceDriverFactory
         "S71500" => CpuType.S71500,
         _ => throw new FormatException($"设备“{config.Name}”的 CPU 型号无法识别：{config.Cpu}"),
     };
+
+    private static Parity ParseParity(DeviceConfig config) =>
+        config.Parity.Trim().ToLowerInvariant() switch
+        {
+            "none" => Parity.None,
+            "odd" => Parity.Odd,
+            "even" => Parity.Even,
+            _ => throw new FormatException($"设备“{config.Name}”的校验位无法识别：{config.Parity}（支持 None/Odd/Even）"),
+        };
+
+    private static StopBits ParseStopBits(DeviceConfig config) =>
+        config.StopBits.Trim().ToLowerInvariant() switch
+        {
+            "one" => StopBits.One,
+            "onepointfive" => StopBits.OnePointFive,
+            "two" => StopBits.Two,
+            _ => throw new FormatException($"设备“{config.Name}”的停止位无法识别：{config.StopBits}（支持 One/OnePointFive/Two）"),
+        };
 }
