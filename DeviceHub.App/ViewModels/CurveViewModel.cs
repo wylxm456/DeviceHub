@@ -76,12 +76,23 @@ public partial class CurveViewModel : ObservableObject
     [
         new Axis
         {
-            Labeler = value => new DateTime((long)value).ToString("HH:mm:ss"),
+            Labeler = FormatTick,
             UnitWidth = TimeSpan.FromSeconds(1).Ticks,
             MinStep = TimeSpan.FromSeconds(1).Ticks,
             LabelsRotation = 15,
         },
     ];
+
+    /// <summary>
+    /// 时间轴标签格式化。图表为空或坐标轴初始化时，LiveCharts 会拿 0 附近的默认
+    /// 刻度值（含负数）调用标签器——负数当 Ticks 传给 DateTime 会抛
+    /// ArgumentOutOfRangeException，调试器"首次异常中断"会把整个程序按住。
+    /// 守卫住：不是合法刻度就不显示标签。
+    /// </summary>
+    private static string FormatTick(double value) =>
+        double.IsNaN(value) || value < 0 || value >= DateTime.MaxValue.Ticks
+            ? string.Empty
+            : new DateTime((long)value).ToString("HH:mm:ss");
 
     public Axis[] YAxes { get; } = [new Axis()];
 
