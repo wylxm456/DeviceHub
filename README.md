@@ -17,11 +17,12 @@
 | M3 北向对接 | OPC UA Server、MQTT 发布（MQTTnet）、Linux 虚拟机部署验证 | ⏳ |
 | M4 亮点 | InfluxDB 时序库、内置 Modbus 模拟器、脚本引擎（任选） | ⏳ |
 
-M1 进度：**S7 链路已打通并接入界面**——
-- 自研 [DeviceHub.Simulator](DeviceHub.Simulator/)（snap7 Server API 的 S7 从站模拟器）作为被采集设备；
-- S7NetPlus 驱动经真实 S7 协议栈读写 DB1，端到端集成测试覆盖"连接—批量读—写设定值—物理响应"；
-- 界面设备下拉框 + `appsettings.json` 配置化：**新增设备只改配置不改代码**，驱动实例由工厂按配置创建，组装走 Generic Host + DI；
-- 对接真机/PLCSIM 时仅需在配置里更换连接参数（IP/Rack/Slot/CPU 类型）。
+M1 进度：**双真实协议打通并接入界面**——
+- 自研 [DeviceHub.Simulator](DeviceHub.Simulator/)：S7 从站模拟器（snap7 Server API）+ 迷你 Modbus TCP 从站（测试用）；
+- **S7NetPlus 驱动**：真实 S7 协议栈读写 DB1，最小覆盖区间一次往返批量读；
+- **NModbus TCP 驱动**：FC03/06/16，HRn / 4xxxx 双地址格式，浮点 ABCD 大端与 S7 共用转换器，2 秒传输超时防挂起；
+- 界面设备下拉框 + `appsettings.json` 配置化：**新增设备只改配置不改代码**，组装走 Generic Host + DI；
+- 46 项测试含两条真实协议栈的端到端集成测试；对接真机仅需在配置里更换连接参数。
 
 ## 技术栈
 

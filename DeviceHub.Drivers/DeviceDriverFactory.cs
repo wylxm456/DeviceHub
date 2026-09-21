@@ -1,5 +1,6 @@
 using DeviceHub.Core.Configuration;
 using DeviceHub.Core.DeviceDriver;
+using DeviceHub.Drivers.Modbus;
 using DeviceHub.Drivers.S7;
 using DeviceHub.Drivers.Simulated;
 using S7.Net;
@@ -24,7 +25,11 @@ public static class DeviceDriverFactory
                 config.Rack,
                 config.Slot,
                 ParseCpu(config)),
-            _ => throw new NotSupportedException($"未知驱动类型：{config.DriverType}（当前支持 Simulated/S7，Modbus 在 M1 后续加入）"),
+            "modbustcp" => new ModbusTcpDriver(
+                config.Ip ?? throw new ArgumentException($"Modbus TCP 设备“{config.Name}”缺少 Ip 配置。"),
+                config.Port,
+                config.SlaveId),
+            _ => throw new NotSupportedException($"未知驱动类型：{config.DriverType}（当前支持 Simulated/S7/ModbusTcp）"),
         };
     }
 

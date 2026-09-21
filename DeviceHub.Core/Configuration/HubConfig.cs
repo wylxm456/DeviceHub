@@ -30,8 +30,14 @@ public sealed class DeviceConfig
     /// <summary>采集周期（毫秒）。</summary>
     public int PollIntervalMs { get; set; } = 500;
 
-    /// <summary>S7 连接参数（Simulated 无需填写）。</summary>
+    /// <summary>S7 / Modbus TCP 连接参数（Simulated 无需填写）。</summary>
     public string? Ip { get; set; }
+
+    /// <summary>Modbus TCP 端口，默认 502。</summary>
+    public int Port { get; set; } = 502;
+
+    /// <summary>Modbus 从站地址（Unit ID），默认 1。</summary>
+    public byte SlaveId { get; set; } = 1;
 
     public short Rack { get; set; }
 

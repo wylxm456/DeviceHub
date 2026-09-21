@@ -5,6 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="NModbus" Version="3.0.83" />
     <PackageReference Include="S7netplus" Version="0.20.0" />
   </ItemGroup>
 
