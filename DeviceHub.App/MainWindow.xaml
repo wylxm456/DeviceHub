@@ -5,6 +5,9 @@
         Title="DeviceHub — 多协议设备采集与监控平台"
         Height="720" Width="1280"
         WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
     <TabControl>
         <TabItem x:Name="AcquisitionTab" Header="设备采集">
             <DockPanel>
@@ -218,8 +221,42 @@
 
                 <!-- 图表延迟创建：LiveCharts 用 OpenGL 渲染（GLWpfControl），若在 XAML 里
                      直接声明，启动时就会初始化 GL——即使本页签从未被点开，这也曾在
-                     VS 调试器下把 UI 线程冻死。改为首次选中页签时由代码创建。 -->
-                <Grid x:Name="CurveChartHost" />
+                     VS 调试器下把 UI 线程冻死。改为首次选中页签时由代码创建。
+                     上：实时曲线（增量刷新）；下：历史查询（一次性静态，查 SQLite 落库）。 -->
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="2*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid x:Name="CurveChartHost" Grid.Row="0" />
+
+                    <GroupBox x:Name="HistoryGroupBox"
+                             Header="历史查询（SQLite 落库趋势）"
+                             Grid.Row="1" Height="300" Margin="0,8,0,0" Padding="6"
+                             Visibility="{Binding HasHistoryResult, Converter={StaticResource BoolToVis}}">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBlock Text="点位：" VerticalAlignment="Center" />
+                                <ComboBox ItemsSource="{Binding HistoryPointNames}"
+                                          SelectedItem="{Binding SelectedHistoryPoint}"
+                                          Width="130" VerticalContentAlignment="Center" />
+                                <TextBlock Text="  范围：" VerticalAlignment="Center" />
+                                <ComboBox ItemsSource="{Binding RangeOptions}"
+                                          SelectedItem="{Binding SelectedRange}"
+                                          DisplayMemberPath="Label"
+                                          Width="120" VerticalContentAlignment="Center" Margin="0,0,8,0" />
+                                <Button Content="查询"
+                                        Command="{Binding QueryHistoryCommand}"
+                                        Padding="16,4" />
+                                <TextBlock Text="{Binding HistoryStatusText}"
+                                           VerticalAlignment="Center"
+                                           Margin="12,0,0,0" />
+                            </StackPanel>
+                            <Grid x:Name="HistoryChartHost" />
+                        </DockPanel>
+                    </GroupBox>
+                </Grid>
             </DockPanel>
         </TabItem>
 

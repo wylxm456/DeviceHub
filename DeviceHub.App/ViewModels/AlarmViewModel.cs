@@ -3,15 +3,17 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceHub.Core.Alarming;
 using DeviceHub.Core.Configuration;
+using DeviceHub.Core.History;
 using DeviceHub.Core.Models;
+using DeviceHub.Storage.History;
 using Microsoft.Extensions.Options;
 
 namespace DeviceHub.App.ViewModels;
 
 /// <summary>
 /// 报警页 ViewModel：采集数据的第三个消费者（表格、曲线之后）。
-/// AlarmEngine 是纯逻辑类，本类负责三件事：喂数（UI 线程契约与曲线页相同）、
-/// 把引擎快照翻译成界面行、把"确认"操作递回引擎。
+/// AlarmEngine 是纯逻辑类，本类负责四件事：喂数（UI 线程契约与曲线页相同）、
+/// 把引擎快照翻译成界面行、把"确认"操作递回引擎、把生命周期事件转交历史落库。
 /// 换设备（AcquisitionStarted）时重置引擎——上一台设备的报警对下一台毫无意义。
 /// </summary>
 public partial class AlarmViewModel : ObservableObject
@@ -20,14 +22,16 @@ public partial class AlarmViewModel : ObservableObject
     private const int MaxLogLines = 200;
 
     private readonly AlarmEngine _engine;
+    private readonly HistoryRecorder _recorder;
     private readonly Dictionary<long, AlarmRow> _rowsById = new();
 
-    public AlarmViewModel(MainViewModel mainViewModel, IOptions<AlarmConfig> options)
+    public AlarmViewModel(MainViewModel mainViewModel, IOptions<AlarmConfig> options, HistoryRecorder recorder)
     {
         var config = options.Value;
         _engine = new AlarmEngine(
             [.. config.Rules.Select(r => r.ToRule())],
             config.HistoryCapacity);
+        _recorder = recorder;
 
         _engine.AlarmRaised += OnAlarmRaised;
         _engine.AlarmCleared += OnAlarmCleared;
@@ -97,6 +101,7 @@ public partial class AlarmViewModel : ObservableObject
         var row = new AlarmRow(alarm);
         _rowsById[alarm.Id] = row;
         ActiveAlarms.Insert(0, row);
+        EnqueueHistory(alarm, "Raised");
         AddLog($"[触发] {alarm.Description}（{alarm.LevelText()}）");
         RefreshStatus();
     }
@@ -108,6 +113,7 @@ public partial class AlarmViewModel : ObservableObject
             ActiveAlarms.Remove(row);
         }
 
+        EnqueueHistory(alarm, "Cleared");
         AddLog($"[恢复] {alarm.PointName} {alarm.ConditionText()}（持续 {alarm.ClearedAt - alarm.RaisedAt:hh\\:mm\\:ss}）");
         RefreshStatus();
     }
@@ -119,9 +125,24 @@ public partial class AlarmViewModel : ObservableObject
             row.Refresh(alarm);
         }
 
+        EnqueueHistory(alarm, "Acknowledged");
         AddLog($"[确认] {alarm.PointName} {alarm.ConditionText()}");
         RefreshStatus();
     }
+
+    /// <summary>报警生命周期事件转交后台落库（内存日志有上限，数据库才是长期账本）。</summary>
+    private void EnqueueHistory(Alarm alarm, string eventType) =>
+        _recorder.EnqueueAlarm(new AlarmEventRecord(
+            alarm.Id,
+            alarm.PointName,
+            alarm.Condition.ToString(),
+            alarm.Level.ToString(),
+            eventType,
+            alarm.PeakValue,
+            alarm.Description,
+            DateTime.Now,
+            alarm.RaisedAt,
+            alarm.ClearedAt));
 
     private void RefreshStatus()
     {

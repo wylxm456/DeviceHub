@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceHub.Core.Acquisition;
 using DeviceHub.Core.Configuration;
+using DeviceHub.Core.History;
 using DeviceHub.Core.Models;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
@@ -27,6 +28,9 @@ namespace DeviceHub.App.ViewModels;
 ///
 /// Bad 质量的样本不画线：趋势页宁可断线也不能伪造数据点——
 /// 把读不到画成 0 或者补一条假线，是趋势页最危险的错误。
+///
+/// 历史查询：实时曲线只有窗口长度（内存），长周期趋势查 SQLite 落库的历史——
+/// 查询结果是一次性静态序列，和实时增量序列分属两个图表，互不打架。
 /// </summary>
 public partial class CurveViewModel : ObservableObject
 {
@@ -43,11 +47,32 @@ public partial class CurveViewModel : ObservableObject
 
     private readonly Dictionary<string, Trace> _traces = new();
     private readonly int _capacity;
+    private readonly IPointHistoryStore _pointHistoryStore;
+    private readonly int _maxQueryRows;
 
-    public CurveViewModel(MainViewModel mainViewModel, IOptions<CurveConfig> options)
+    public CurveViewModel(
+        MainViewModel mainViewModel,
+        IOptions<CurveConfig> options,
+        IOptions<HubOptions> hubOptions,
+        IOptions<StorageConfig> storageOptions,
+        IPointHistoryStore pointHistoryStore)
     {
         // 窗口长度来自配置（禁魔法数字）；配置失真时兜底到 300，不让界面崩
         _capacity = Math.Max(2, options.Value.MaxPoints);
+        _pointHistoryStore = pointHistoryStore;
+        _maxQueryRows = Math.Max(1, storageOptions.Value.MaxQueryRows);
+
+        // 历史查询的下拉候选 = 配置里所有设备的点位名并集（断开状态下也能查历史）
+        foreach (var name in hubOptions.Value.Devices
+                     .SelectMany(d => d.GetPoints())
+                     .Select(p => p.Name)
+                     .Distinct())
+        {
+            HistoryPointNames.Add(name);
+        }
+
+        SelectedHistoryPoint = HistoryPointNames.FirstOrDefault();
+        SelectedRange = RangeOptions[1];
 
         // 双方都是 App 级单例，生命周期与进程相同——订阅不退订，不构成泄漏
         mainViewModel.AcquisitionStarted += OnAcquisitionStarted;
@@ -70,6 +95,93 @@ public partial class CurveViewModel : ObservableObject
     /// <summary>暂停期间缓冲区照常积累，只是不刷界面；恢复时从缓冲区回填，曲线无断档。</summary>
     [ObservableProperty]
     private bool _isPaused;
+
+    // ===== 历史查询（SQLite 落库的趋势回看）=====
+
+    /// <summary>历史查询结果序列（静态一次性绘制，与实时曲线分属两个图表）。</summary>
+    public ObservableCollection<ISeries> HistorySeries { get; } = [];
+
+    /// <summary>可查询的点位名 = 配置中所有设备点位名的并集。</summary>
+    public ObservableCollection<string> HistoryPointNames { get; } = [];
+
+    public IReadOnlyList<HistoryRange> RangeOptions { get; } =
+    [
+        new HistoryRange(5, "最近 5 分钟"),
+        new HistoryRange(30, "最近 30 分钟"),
+        new HistoryRange(60, "最近 1 小时"),
+        new HistoryRange(240, "最近 4 小时"),
+    ];
+
+    [ObservableProperty]
+    private string? _selectedHistoryPoint;
+
+    [ObservableProperty]
+    private HistoryRange _selectedRange;
+
+    [ObservableProperty]
+    private bool _isQuerying;
+
+    [ObservableProperty]
+    private bool _hasHistoryResult;
+
+    [ObservableProperty]
+    private string _historyStatusText = "选择点位与范围后查询";
+
+    /// <summary>查询历史趋势：SQLite 只被后台查询碰，UI 线程只等结果。</summary>
+    [RelayCommand(CanExecute = nameof(CanQueryHistory))]
+    private async Task QueryHistoryAsync()
+    {
+        if (SelectedHistoryPoint is null)
+        {
+            return;
+        }
+
+        IsQuerying = true;
+        try
+        {
+            var to = DateTime.Now;
+            var from = to.AddMinutes(-SelectedRange.Minutes);
+            var records = await _pointHistoryStore
+                .QueryAsync(SelectedHistoryPoint, from, to, _maxQueryRows)
+                .ConfigureAwait(true);
+
+            HistorySeries.Clear();
+            var values = new ObservableCollection<DateTimePoint>(
+                records.Select(r => new DateTimePoint(r.Timestamp, r.Value)));
+            HistorySeries.Add(new LineSeries<DateTimePoint>
+            {
+                Name = $"{SelectedHistoryPoint}（历史 {records.Count} 点）",
+                Values = values,
+                Stroke = new SolidColorPaint(new SKColor(0x7F, 0x8C, 0x8D)) { StrokeThickness = 2 }, // 灰色：与实时曲线的彩色区分
+                Fill = null,
+                GeometrySize = 0,
+                LineSmoothness = 0,
+            });
+
+            HasHistoryResult = true;
+            HistoryStatusText = records.Count == 0
+                ? "该时间段没有历史数据（落库有约 2 秒批量写延迟）"
+                : $"查询到 {records.Count} 个采样点";
+        }
+        catch (Exception ex)
+        {
+            HistoryStatusText = $"查询失败：{ex.Message}";
+        }
+        finally
+        {
+            IsQuerying = false;
+        }
+    }
+
+    private bool CanQueryHistory() => !IsQuerying && SelectedHistoryPoint is not null;
+
+    partial void OnSelectedHistoryPointChanged(string? value) => QueryHistoryCommand.NotifyCanExecuteChanged();
+
+    /// <summary>历史查询的时间范围选项。</summary>
+    public sealed record HistoryRange(int Minutes, string Label)
+    {
+        public override string ToString() => Label;
+    }
 
     /// <summary>时间轴：LiveCharts 的 DateTimePoint 以 DateTime.Ticks 为横坐标，标签按秒格式化。</summary>
     public Axis[] XAxes { get; } =

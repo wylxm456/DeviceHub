@@ -28,7 +28,8 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// 首次切到"实时曲线"页时才创建图表控件：把 OpenGL 初始化从启动路径挪到
-    /// 用户主动查看的时刻（见 XAML 中的注释）。
+    /// 用户主动查看的时刻（见 XAML 中的注释）。实时与历史两个图一起创建——
+    /// 历史图平时被 HasHistoryResult 折叠，首次查询成功后才现身。
     /// </summary>
     private void CurveTab_Selected(object sender, RoutedEventArgs e)
     {
@@ -42,6 +43,14 @@ public partial class MainWindow : Window
         CurveChartHost.Children.Add(new CartesianChart
         {
             Series = vm.Series,
+            XAxes = vm.XAxes,
+            YAxes = vm.YAxes,
+            LegendPosition = LegendPosition.Top,
+            Margin = new Thickness(0),
+        });
+        HistoryChartHost.Children.Add(new CartesianChart
+        {
+            Series = vm.HistorySeries,
             XAxes = vm.XAxes,
             YAxes = vm.YAxes,
             LegendPosition = LegendPosition.Top,

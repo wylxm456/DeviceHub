@@ -150,6 +150,19 @@ public sealed class AlarmRuleConfig
         });
 }
 
+/// <summary>历史存储配置（绑定 appsettings.json 的 Storage 节）。</summary>
+public sealed class StorageConfig
+{
+    /// <summary>SQLite 库文件路径（相对路径锚定 exe 目录）。</summary>
+    public string DatabasePath { get; set; } = "data/devicehub.db";
+
+    /// <summary>后台批量冲刷周期（毫秒）：界面只进队列，磁盘写由它节流。</summary>
+    public int FlushIntervalMs { get; set; } = 2000;
+
+    /// <summary>历史查询单次最大返回行数。</summary>
+    public int MaxQueryRows { get; set; } = 2000;
+}
+
 /// <summary>报警引擎配置（绑定 appsettings.json 的 Alarms 节）。</summary>
 public sealed class AlarmConfig
 {
