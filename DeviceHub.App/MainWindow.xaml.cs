@@ -15,13 +15,15 @@ public partial class MainWindow : Window
         MainViewModel mainViewModel,
         MotionViewModel motionViewModel,
         VisionViewModel visionViewModel,
-        CurveViewModel curveViewModel)
+        CurveViewModel curveViewModel,
+        AlarmViewModel alarmViewModel)
     {
         InitializeComponent();
         AcquisitionTab.DataContext = mainViewModel;
         MotionTab.DataContext = motionViewModel;
         VisionTab.DataContext = visionViewModel;
         CurveTab.DataContext = curveViewModel;
+        AlarmTab.DataContext = alarmViewModel;
     }
 
     /// <summary>

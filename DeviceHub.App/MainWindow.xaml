@@ -222,5 +222,54 @@
                 <Grid x:Name="CurveChartHost" />
             </DockPanel>
         </TabItem>
+
+        <TabItem x:Name="AlarmTab" Header="报警">
+            <DockPanel Margin="10">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8">
+                    <Button Content="确认选中"
+                            Command="{Binding AcknowledgeSelectedCommand}"
+                            Padding="16,6" Margin="0,0,8,0" />
+                    <Button Content="全部确认"
+                            Command="{Binding AcknowledgeAllCommand}"
+                            Padding="16,6" />
+                    <TextBlock Text="{Binding StatusText}"
+                               VerticalAlignment="Center"
+                               Margin="16,0,0,0"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+
+                <GroupBox Header="事件历史（触发/恢复/确认）" DockPanel.Dock="Bottom"
+                          Padding="6" Height="190" Margin="0,8,0,0">
+                    <ListBox ItemsSource="{Binding EventLog}"
+                             FontFamily="Consolas" FontSize="12" />
+                </GroupBox>
+
+                <DataGrid ItemsSource="{Binding ActiveAlarms}"
+                          SelectedItem="{Binding SelectedAlarm}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          CanUserAddRows="False">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsCritical}" Value="True">
+                                    <Setter Property="Foreground" Value="#D9534F" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="点位" Binding="{Binding PointName}" Width="110" />
+                        <DataGridTextColumn Header="条件" Binding="{Binding ConditionText}" Width="70" />
+                        <DataGridTextColumn Header="级别" Binding="{Binding LevelText}" Width="60" />
+                        <DataGridTextColumn Header="状态" Binding="{Binding StateText}" Width="70" />
+                        <DataGridTextColumn Header="触发时间" Binding="{Binding RaisedAtText}" Width="90" />
+                        <DataGridTextColumn Header="描述" Binding="{Binding Description}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </TabItem>
     </TabControl>
 </Window>

@@ -37,10 +37,12 @@ public partial class App : Application
         builder.Services.Configure<VisionConfig>(builder.Configuration.GetSection("Vision"));
         builder.Services.Configure<CurveConfig>(builder.Configuration.GetSection("Curve"));
         builder.Services.Configure<ReconnectConfig>(builder.Configuration.GetSection("Reconnect"));
+        builder.Services.Configure<AlarmConfig>(builder.Configuration.GetSection("Alarms"));
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddSingleton<MotionViewModel>();
         builder.Services.AddSingleton<VisionViewModel>();
         builder.Services.AddSingleton<CurveViewModel>();
+        builder.Services.AddSingleton<AlarmViewModel>();
 
         _host = builder.Build();
 
@@ -48,7 +50,8 @@ public partial class App : Application
             _host.Services.GetRequiredService<MainViewModel>(),
             _host.Services.GetRequiredService<MotionViewModel>(),
             _host.Services.GetRequiredService<VisionViewModel>(),
-            _host.Services.GetRequiredService<CurveViewModel>());
+            _host.Services.GetRequiredService<CurveViewModel>(),
+            _host.Services.GetRequiredService<AlarmViewModel>());
         MainWindow = mainWindow;
         mainWindow.Show();
     }

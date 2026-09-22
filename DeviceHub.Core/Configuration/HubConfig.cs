@@ -1,3 +1,4 @@
+using DeviceHub.Core.Alarming;
 using DeviceHub.Core.Models;
 
 namespace DeviceHub.Core.Configuration;
@@ -110,6 +111,52 @@ public sealed class MotionConfig
     public string DriverType { get; set; } = "SimMotion";
 
     public List<MotionAxisConfig> Axes { get; set; } = [];
+}
+
+/// <summary>一条报警规则的配置（JSON 反序列化目标），字符串字段在 ToRule 时解析并校验。</summary>
+public sealed class AlarmRuleConfig
+{
+    /// <summary>绑定的点位显示名。</summary>
+    public string PointName { get; set; } = string.Empty;
+
+    /// <summary>条件：HighLimit / LowLimit / BadQuality。</summary>
+    public string Type { get; set; } = "HighLimit";
+
+    /// <summary>限值阈值（BadQuality 条件忽略）。</summary>
+    public double Threshold { get; set; }
+
+    /// <summary>回差：防阈值附近震荡（BadQuality 条件忽略）。</summary>
+    public double Hysteresis { get; set; }
+
+    /// <summary>级别：Warning / Critical。</summary>
+    public string Level { get; set; } = "Warning";
+
+    public AlarmRule ToRule() => AlarmRule.Create(
+        PointName,
+        Type.Trim().ToLowerInvariant() switch
+        {
+            "highlimit" => AlarmCondition.HighLimit,
+            "lowlimit" => AlarmCondition.LowLimit,
+            "badquality" => AlarmCondition.BadQuality,
+            _ => throw new FormatException($"报警条件无法识别：{Type}（支持 HighLimit/LowLimit/BadQuality）"),
+        },
+        Threshold,
+        Hysteresis,
+        Level.Trim().ToLowerInvariant() switch
+        {
+            "warning" => AlarmLevel.Warning,
+            "critical" => AlarmLevel.Critical,
+            _ => throw new FormatException($"报警级别无法识别：{Level}（支持 Warning/Critical）"),
+        });
+}
+
+/// <summary>报警引擎配置（绑定 appsettings.json 的 Alarms 节）。</summary>
+public sealed class AlarmConfig
+{
+    public List<AlarmRuleConfig> Rules { get; set; } = [];
+
+    /// <summary>历史事件容量上限。</summary>
+    public int HistoryCapacity { get; set; } = 500;
 }
 
 /// <summary>断线重连策略配置（绑定 appsettings.json 的 Reconnect 节）。</summary>
