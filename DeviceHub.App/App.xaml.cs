@@ -4,6 +4,7 @@ using DeviceHub.App.ViewModels;
 using DeviceHub.Core.Configuration;
 using DeviceHub.Core.History;
 using DeviceHub.Core.Security;
+using DeviceHub.Northbound.OpcUa;
 using DeviceHub.Storage.History;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -44,6 +45,7 @@ public partial class App : Application
         builder.Services.Configure<AlarmConfig>(builder.Configuration.GetSection("Alarms"));
         builder.Services.Configure<StorageConfig>(builder.Configuration.GetSection("Storage"));
         builder.Services.Configure<AuthConfig>(builder.Configuration.GetSection("Auth"));
+        builder.Services.Configure<NorthboundConfig>(builder.Configuration.GetSection("Northbound"));
         builder.Services.AddSingleton<AuthService>(sp =>
         {
             var config = sp.GetRequiredService<IOptions<AuthConfig>>().Value;
@@ -79,6 +81,11 @@ public partial class App : Application
         // 同一个单例既按类型注入、又作为托管服务启停——Host 负责它的生命周期
         builder.Services.AddHostedService(sp => sp.GetRequiredService<HistoryRecorder>());
 
+        // OPC UA 北向服务器：托管服务常驻，采集流喂节点（首次启动自动生成自签名证书）
+        builder.Services.AddSingleton<OpcUaNorthboundService>(sp =>
+            new OpcUaNorthboundService(sp.GetRequiredService<IOptions<NorthboundConfig>>().Value.OpcUaPort));
+        builder.Services.AddHostedService(sp => sp.GetRequiredService<OpcUaNorthboundService>());
+
         _host = builder.Build();
 
         // 登录门：模态登录成功才进主界面；关闭登录窗 = 放弃使用，应用直接退出
@@ -104,6 +111,11 @@ public partial class App : Application
         mainViewModel.PointUpdated += value =>
             recorder.EnqueuePoint(new PointHistoryRecord(value.Name, value.Value, value.Quality, value.Timestamp));
         recorder.FlushFailed += ex => Log.Error(ex, "历史数据冲刷失败");
+
+        // OPC UA 北向：采集开始建点位节点，读数实时刷节点值——MES/SCADA 可随时接入订阅
+        var opcUa = _host.Services.GetRequiredService<OpcUaNorthboundService>();
+        mainViewModel.AcquisitionStarted += points => opcUa.EnsurePoints(points.Select(p => p.Name));
+        mainViewModel.PointUpdated += opcUa.UpdateFrom;
 
         var mainWindow = new MainWindow(
             mainViewModel,

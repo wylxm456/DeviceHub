@@ -31,6 +31,7 @@
     <ProjectReference Include="..\DeviceHub.Simulator\DeviceHub.Simulator.csproj" />
     <ProjectReference Include="..\DeviceHub.Vision\DeviceHub.Vision.csproj" />
     <ProjectReference Include="..\DeviceHub.Storage\DeviceHub.Storage.csproj" />
+    <ProjectReference Include="..\DeviceHub.Northbound\DeviceHub.Northbound.csproj" />
   </ItemGroup>
 
 </Project>

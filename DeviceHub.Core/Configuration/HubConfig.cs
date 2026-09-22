@@ -114,6 +114,13 @@ public sealed class MotionConfig
     public List<MotionAxisConfig> Axes { get; set; } = [];
 }
 
+/// <summary>北向服务配置（绑定 appsettings.json 的 Northbound 节）。</summary>
+public sealed class NorthboundConfig
+{
+    /// <summary>OPC UA Server 监听端口（默认 4840，OPC UA 标准端口）。</summary>
+    public int OpcUaPort { get; set; } = 4840;
+}
+
 /// <summary>一条登录账号的配置（JSON 反序列化目标）。</summary>
 public sealed class AuthUserConfig
 {

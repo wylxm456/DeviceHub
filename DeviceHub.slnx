@@ -2,6 +2,7 @@
   <Project Path="DeviceHub.App/DeviceHub.App.csproj" />
   <Project Path="DeviceHub.Core/DeviceHub.Core.csproj" />
   <Project Path="DeviceHub.Drivers/DeviceHub.Drivers.csproj" />
+  <Project Path="DeviceHub.Northbound/DeviceHub.Northbound.csproj" />
   <Project Path="DeviceHub.Simulator/DeviceHub.Simulator.csproj" />
   <Project Path="DeviceHub.Storage/DeviceHub.Storage.csproj" />
   <Project Path="DeviceHub.Tests/DeviceHub.Tests.csproj" />
