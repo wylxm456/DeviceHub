@@ -267,6 +267,9 @@
                                           Width="120" VerticalContentAlignment="Center" Margin="0,0,8,0" />
                                 <Button Content="查询"
                                         Command="{Binding QueryHistoryCommand}"
+                                        Padding="16,4" Margin="0,0,8,0" />
+                                <Button Content="导出 Excel"
+                                        Command="{Binding ExportHistoryCommand}"
                                         Padding="16,4" />
                                 <TextBlock Text="{Binding HistoryStatusText}"
                                            VerticalAlignment="Center"
@@ -287,6 +290,9 @@
                             Padding="16,6" Margin="0,0,8,0" />
                     <Button Content="全部确认"
                             Command="{Binding AcknowledgeAllCommand}"
+                            Padding="16,6" Margin="0,0,8,0" />
+                    <Button Content="导出报警 Excel"
+                            Command="{Binding ExportAlarmsCommand}"
                             Padding="16,6" />
                     <TextBlock Text="{Binding StatusText}"
                                VerticalAlignment="Center"

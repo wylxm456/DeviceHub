@@ -8,6 +8,7 @@ using DeviceHub.Core.Models;
 using DeviceHub.Core.Security;
 using DeviceHub.Storage.History;
 using Microsoft.Extensions.Options;
+using Microsoft.Win32;
 
 namespace DeviceHub.App.ViewModels;
 
@@ -25,9 +26,19 @@ public partial class AlarmViewModel : ObservableObject
     private readonly AlarmEngine _engine;
     private readonly HistoryRecorder _recorder;
     private readonly AuthService _session;
+    private readonly IAlarmEventStore _alarmEventStore;
+    private readonly IHistoryExporter _exporter;
+    private readonly int _maxExportRows;
     private readonly Dictionary<long, AlarmRow> _rowsById = new();
 
-    public AlarmViewModel(MainViewModel mainViewModel, IOptions<AlarmConfig> options, HistoryRecorder recorder, AuthService session)
+    public AlarmViewModel(
+        MainViewModel mainViewModel,
+        IOptions<AlarmConfig> options,
+        IOptions<StorageConfig> storageOptions,
+        HistoryRecorder recorder,
+        AuthService session,
+        IAlarmEventStore alarmEventStore,
+        IHistoryExporter exporter)
     {
         var config = options.Value;
         _engine = new AlarmEngine(
@@ -35,6 +46,9 @@ public partial class AlarmViewModel : ObservableObject
             config.HistoryCapacity);
         _recorder = recorder;
         _session = session;
+        _alarmEventStore = alarmEventStore;
+        _exporter = exporter;
+        _maxExportRows = Math.Max(1, storageOptions.Value.MaxQueryRows);
 
         // 确认操作有权限门禁（当前操作员/工程师都具备；为将来"只读访客"角色留位）
         _session.CurrentUserChanged += () =>
@@ -63,6 +77,54 @@ public partial class AlarmViewModel : ObservableObject
 
     [ObservableProperty]
     private string _statusText = "未采集（请在「设备采集」页连接设备）";
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ExportAlarmsCommand))]
+    private bool _isExportingAlarms;
+
+    /// <summary>
+    /// 导出报警历史到 Excel：数据源是 SQLite（长期账本），不是内存里的界面日志——
+    /// 内存日志只保留最近 200 条给看板用，报表要的是全量账本。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExportAlarms))]
+    private async Task ExportAlarmsAsync()
+    {
+        IsExportingAlarms = true;
+        try
+        {
+            var events = await _alarmEventStore.QueryRecentAsync(_maxExportRows).ConfigureAwait(true);
+            if (events.Count == 0)
+            {
+                StatusText = "没有可导出的报警事件";
+                return;
+            }
+
+            // SaveFileDialog 是视图层关注点，在 ViewModel 里直接用是务实取舍；
+            // 接口化（DialogService）留给后续演进
+            var dialog = new SaveFileDialog
+            {
+                Filter = "Excel 工作簿|*.xlsx",
+                FileName = $"报警历史_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
+            };
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            await _exporter.ExportAlarmEventsAsync(events, dialog.FileName).ConfigureAwait(true);
+            StatusText = $"已导出 {events.Count} 条报警事件 → {dialog.FileName}";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"导出失败：{ex.Message}";
+        }
+        finally
+        {
+            IsExportingAlarms = false;
+        }
+    }
+
+    private bool CanExportAlarms() => !IsExportingAlarms;
 
     /// <summary>确认选中的一条。只有"活动"状态可确认，已确认的再点是无效操作（引擎返回 false）。</summary>
     [RelayCommand(CanExecute = nameof(CanAcknowledgeSelected))]

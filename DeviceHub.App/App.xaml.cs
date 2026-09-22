@@ -67,6 +67,7 @@ public partial class App : Application
         });
         builder.Services.AddSingleton<IPointHistoryStore>(sp => sp.GetRequiredService<SqliteHistoryStore>());
         builder.Services.AddSingleton<IAlarmEventStore>(sp => sp.GetRequiredService<SqliteHistoryStore>());
+        builder.Services.AddSingleton<IHistoryExporter, ClosedXmlHistoryExporter>();
         builder.Services.AddSingleton<HistoryRecorder>(sp =>
         {
             var config = sp.GetRequiredService<IOptions<StorageConfig>>().Value;

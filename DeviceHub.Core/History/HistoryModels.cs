@@ -57,3 +57,18 @@ public interface IAlarmEventStore
     /// <summary>最近的事件，按时间从新到旧。</summary>
     Task<IReadOnlyList<AlarmEventRecord>> QueryRecentAsync(int limit, CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// 历史数据 Excel 导出抽象：把落库的点位/报警数据变成可外发的报表。
+/// 导出是"读端"的事——只消费已存在的记录，与写入路径（Store/Recorder）完全解耦。
+/// </summary>
+public interface IHistoryExporter
+{
+    /// <summary>导出点位历史。目标文件已存在时覆盖。</summary>
+    Task ExportPointHistoryAsync(
+        IReadOnlyList<PointHistoryRecord> records, string filePath, CancellationToken cancellationToken = default);
+
+    /// <summary>导出报警事件。目标文件已存在时覆盖。</summary>
+    Task ExportAlarmEventsAsync(
+        IReadOnlyList<AlarmEventRecord> events, string filePath, CancellationToken cancellationToken = default);
+}

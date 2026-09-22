@@ -10,6 +10,7 @@ using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.Extensions.Options;
+using Microsoft.Win32;
 using SkiaSharp;
 
 namespace DeviceHub.App.ViewModels;
@@ -48,18 +49,21 @@ public partial class CurveViewModel : ObservableObject
     private readonly Dictionary<string, Trace> _traces = new();
     private readonly int _capacity;
     private readonly IPointHistoryStore _pointHistoryStore;
-    private readonly int _maxQueryRows;
+    private readonly IHistoryExporter _exporter;
+    private IReadOnlyList<PointHistoryRecord> _lastQuery = [];
 
     public CurveViewModel(
         MainViewModel mainViewModel,
         IOptions<CurveConfig> options,
         IOptions<HubOptions> hubOptions,
         IOptions<StorageConfig> storageOptions,
-        IPointHistoryStore pointHistoryStore)
+        IPointHistoryStore pointHistoryStore,
+        IHistoryExporter exporter)
     {
         // 窗口长度来自配置（禁魔法数字）；配置失真时兜底到 300，不让界面崩
         _capacity = Math.Max(2, options.Value.MaxPoints);
         _pointHistoryStore = pointHistoryStore;
+        _exporter = exporter;
         _maxQueryRows = Math.Max(1, storageOptions.Value.MaxQueryRows);
 
         // 历史查询的下拉候选 = 配置里所有设备的点位名并集（断开状态下也能查历史）
@@ -122,7 +126,12 @@ public partial class CurveViewModel : ObservableObject
     private bool _isQuerying;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ExportHistoryCommand))]
     private bool _hasHistoryResult;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ExportHistoryCommand))]
+    private bool _isExportingHistory;
 
     [ObservableProperty]
     private string _historyStatusText = "选择点位与范围后查询";
@@ -144,6 +153,7 @@ public partial class CurveViewModel : ObservableObject
             var records = await _pointHistoryStore
                 .QueryAsync(SelectedHistoryPoint, from, to, _maxQueryRows)
                 .ConfigureAwait(true);
+            _lastQuery = records; // 导出"所见即所导"用的当前结果
 
             HistorySeries.Clear();
             var values = new ObservableCollection<DateTimePoint>(
@@ -172,6 +182,41 @@ public partial class CurveViewModel : ObservableObject
             IsQuerying = false;
         }
     }
+
+    /// <summary>
+    /// 导出当前查询结果到 Excel：所见即所导——图上画的是什么，表里就是什么，
+    /// 不做第二次查询避免"图和表对不上"。
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanExportHistory))]
+    private async Task ExportHistoryAsync()
+    {
+        var dialog = new SaveFileDialog
+        {
+            Filter = "Excel 工作簿|*.xlsx",
+            FileName = $"点位历史_{SelectedHistoryPoint}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
+        };
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        IsExportingHistory = true;
+        try
+        {
+            await _exporter.ExportPointHistoryAsync(_lastQuery, dialog.FileName).ConfigureAwait(true);
+            HistoryStatusText = $"已导出 {_lastQuery.Count} 个采样点 → {dialog.FileName}";
+        }
+        catch (Exception ex)
+        {
+            HistoryStatusText = $"导出失败：{ex.Message}";
+        }
+        finally
+        {
+            IsExportingHistory = false;
+        }
+    }
+
+    private bool CanExportHistory() => HasHistoryResult && !IsExportingHistory && _lastQuery.Count > 0;
 
     private bool CanQueryHistory() => !IsQuerying && SelectedHistoryPoint is not null;
 
