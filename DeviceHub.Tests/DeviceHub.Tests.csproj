@@ -11,6 +11,10 @@
   <ItemGroup>
     <!-- 集成测试在测试进程内启动 snap7 仿真服务器，需要原生库随测试输出 -->
     <None Include="..\DeviceHub.Simulator\libs\snap7.dll" Link="snap7.dll" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Halcon 互操作层：测试直接探活/断言（本机 halcon.dll 走系统 PATH，无 HALCON 环境的机器测试自动跳过） -->
+    <Reference Include="halcondotnet">
+      <HintPath>..\DeviceHub.Vision.Halcon\libs\halcondotnet.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
@@ -33,6 +37,7 @@
     <ProjectReference Include="..\DeviceHub.Vision\DeviceHub.Vision.csproj" />
     <ProjectReference Include="..\DeviceHub.Storage\DeviceHub.Storage.csproj" />
     <ProjectReference Include="..\DeviceHub.Northbound\DeviceHub.Northbound.csproj" />
+    <ProjectReference Include="..\DeviceHub.Vision.Halcon\DeviceHub.Vision.Halcon.csproj" />
   </ItemGroup>
 
 </Project>

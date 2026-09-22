@@ -6,5 +6,6 @@
   <Project Path="DeviceHub.Simulator/DeviceHub.Simulator.csproj" />
   <Project Path="DeviceHub.Storage/DeviceHub.Storage.csproj" />
   <Project Path="DeviceHub.Tests/DeviceHub.Tests.csproj" />
+  <Project Path="DeviceHub.Vision.Halcon/DeviceHub.Vision.Halcon.csproj" />
   <Project Path="DeviceHub.Vision/DeviceHub.Vision.csproj" />
 </Solution>

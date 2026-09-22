@@ -257,4 +257,7 @@ public sealed class VisionConfig
 
     /// <summary>工件尺寸（mm），矩形短边。</summary>
     public double WorkpieceWidthMm { get; set; } = 3.0;
+
+    /// <summary>定位器实现：OpenCv（阈值+轮廓，默认）/ Halcon（形状模板匹配）。</summary>
+    public string Locator { get; set; } = "OpenCv";
 }

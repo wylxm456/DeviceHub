@@ -10,7 +10,7 @@ namespace DeviceHub.Vision;
 public static class NinePointCalibration
 {
     public static (AffineTransform2D PixelToWorld, double MeanResidualMm) Run(
-        SyntheticCamera camera, VisionLocator locator, double spacingMm = 20)
+        SyntheticCamera camera, IVisionLocator locator, double spacingMm = 20)
     {
         ArgumentNullException.ThrowIfNull(camera);
         ArgumentNullException.ThrowIfNull(locator);

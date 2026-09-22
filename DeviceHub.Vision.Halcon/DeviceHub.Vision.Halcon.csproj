@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeviceHub.Vision\DeviceHub.Vision.csproj" />
+  </ItemGroup>
+
+  <!-- halcondotnet.dll 是托管互操作层（随仓库走，类比 Simulator/libs/snap7.dll）；
+       运行时通过系统 PATH 解析本机 halcon.dll（HALCON 安装目录 bin\x64-win64）——
+       无 HALCON 环境的机器：本项目仍可编译（纯 MSIL），仅运行期调用才需要本机库 -->
+  <ItemGroup>
+    <Reference Include="halcondotnet">
+      <HintPath>libs\halcondotnet.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+</Project>

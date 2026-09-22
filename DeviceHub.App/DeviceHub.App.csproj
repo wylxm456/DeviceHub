@@ -6,6 +6,7 @@
     <ProjectReference Include="..\DeviceHub.Vision\DeviceHub.Vision.csproj" />
     <ProjectReference Include="..\DeviceHub.Storage\DeviceHub.Storage.csproj" />
     <ProjectReference Include="..\DeviceHub.Northbound\DeviceHub.Northbound.csproj" />
+    <ProjectReference Include="..\DeviceHub.Vision.Halcon\DeviceHub.Vision.Halcon.csproj" />
   </ItemGroup>
 
   <ItemGroup>

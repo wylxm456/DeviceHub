@@ -9,6 +9,7 @@ using DeviceHub.Core.Configuration;
 using DeviceHub.Core.Motion;
 using DeviceHub.Core.Security;
 using DeviceHub.Vision;
+using DeviceHub.Vision.Halcon;
 using Microsoft.Extensions.Options;
 using OpenCvSharp;
 
@@ -23,7 +24,8 @@ public partial class VisionViewModel : ObservableObject
 {
     private readonly VisionConfig _config;
     private readonly MotionViewModel _motion;
-    private readonly VisionLocator _locator = new();
+    private readonly IVisionLocator _locator;
+    private readonly string _locatorName;
     private readonly DispatcherTimer _previewTimer;
     private SyntheticCamera? _camera;
     private AffineTransform2D? _pixelToWorld;
@@ -57,6 +59,15 @@ public partial class VisionViewModel : ObservableObject
     {
         _config = options.Value;
         _motion = motion;
+
+        // 定位器按配置插拔：OpenCv 轮廓定位（默认）或 Halcon 形状匹配——
+        // IVisionLocator 之下标定/引导/界面全复用，换实现只改这一处
+        (_locator, _locatorName) = _config.Locator?.Trim().ToLowerInvariant() switch
+        {
+            "halcon" => (new HalconVisionLocator(_config), "Halcon 形状匹配"),
+            _ => (new VisionLocator(), "OpenCv 轮廓"),
+        };
+
         _previewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         _previewTimer.Tick += async (_, _) => await CapturePreviewAsync().ConfigureAwait(true);
 
@@ -77,8 +88,8 @@ public partial class VisionViewModel : ObservableObject
         {
             _camera = new SyntheticCamera(_config);
             _previewTimer.Start();
-            StatusText = $"相机已连接（合成 {_config.ImageWidth}x{_config.ImageHeight}，{_config.ScalePxPerMm} px/mm）";
-            Log("相机已连接，工件已随机摆放");
+            StatusText = $"相机已连接（合成 {_config.ImageWidth}x{_config.ImageHeight}，{_config.ScalePxPerMm} px/mm，定位器：{_locatorName}）";
+            Log($"相机已连接，工件已随机摆放（定位器：{_locatorName}）");
         }
         finally
         {

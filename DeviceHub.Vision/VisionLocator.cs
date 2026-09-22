@@ -19,11 +19,22 @@ public sealed record VisionResult(
 }
 
 /// <summary>
+/// 视觉定位器抽象：一帧图像 → 工件中心的像素坐标与旋转角。
+/// 实现可插拔（OpenCvSharp 轮廓定位 / Halcon 形状匹配定位）——
+/// 定位算法与标定、引导运动的代码完全解耦，换实现只改配置。
+/// </summary>
+public interface IVisionLocator
+{
+    /// <summary>在一帧图像上定位工件。未找到返回 Found=false。</summary>
+    VisionResult Locate(Mat frame);
+}
+
+/// <summary>
 /// 视觉定位器：灰度 → 阈值分割 → 外轮廓 → 最大面积 → 最小外接矩形。
 /// 输出工件中心的像素坐标与旋转角。算法刻意保持简单——目的是跑通
 /// "取流 → 定位 → 标定换算 → 引导运动"的闭环，算法升级（模板匹配/深度学习）不动接口。
 /// </summary>
-public sealed class VisionLocator
+public sealed class VisionLocator : IVisionLocator
 {
     /// <summary>小于该面积（像素²）的轮廓视为噪点忽略。</summary>
     public double MinAreaPx { get; set; } = 200;
