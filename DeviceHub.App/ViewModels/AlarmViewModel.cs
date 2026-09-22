@@ -5,6 +5,7 @@ using DeviceHub.Core.Alarming;
 using DeviceHub.Core.Configuration;
 using DeviceHub.Core.History;
 using DeviceHub.Core.Models;
+using DeviceHub.Core.Security;
 using DeviceHub.Storage.History;
 using Microsoft.Extensions.Options;
 
@@ -23,15 +24,24 @@ public partial class AlarmViewModel : ObservableObject
 
     private readonly AlarmEngine _engine;
     private readonly HistoryRecorder _recorder;
+    private readonly AuthService _session;
     private readonly Dictionary<long, AlarmRow> _rowsById = new();
 
-    public AlarmViewModel(MainViewModel mainViewModel, IOptions<AlarmConfig> options, HistoryRecorder recorder)
+    public AlarmViewModel(MainViewModel mainViewModel, IOptions<AlarmConfig> options, HistoryRecorder recorder, AuthService session)
     {
         var config = options.Value;
         _engine = new AlarmEngine(
             [.. config.Rules.Select(r => r.ToRule())],
             config.HistoryCapacity);
         _recorder = recorder;
+        _session = session;
+
+        // 确认操作有权限门禁（当前操作员/工程师都具备；为将来"只读访客"角色留位）
+        _session.CurrentUserChanged += () =>
+        {
+            AcknowledgeSelectedCommand.NotifyCanExecuteChanged();
+            AcknowledgeAllCommand.NotifyCanExecuteChanged();
+        };
 
         _engine.AlarmRaised += OnAlarmRaised;
         _engine.AlarmCleared += OnAlarmCleared;
@@ -65,10 +75,12 @@ public partial class AlarmViewModel : ObservableObject
     }
 
     private bool CanAcknowledgeSelected() =>
-        SelectedAlarm is { StateText: "活动" };
+        _session.HasPermission(Permission.AcknowledgeAlarm) && SelectedAlarm is { StateText: "活动" };
+
+    private bool CanAcknowledgeAll() => _session.HasPermission(Permission.AcknowledgeAlarm);
 
     /// <summary>确认全部活动报警：逐条递给引擎，引擎对无效的自行拒绝。</summary>
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanAcknowledgeAll))]
     private void AcknowledgeAll()
     {
         foreach (var alarm in _engine.ActiveAlarms.Where(a => a.State == AlarmState.Active).ToList())

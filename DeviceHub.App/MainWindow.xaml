@@ -8,7 +8,20 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
-    <TabControl>
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#F0F0F0" Padding="10,5">
+            <DockPanel>
+                <Button DockPanel.Dock="Right"
+                        Content="锁定 / 切换用户"
+                        Padding="10,2"
+                        Click="LockButton_Click" />
+                <TextBlock x:Name="CurrentUserText"
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Text="未登录" />
+            </DockPanel>
+        </Border>
+        <TabControl>
         <TabItem x:Name="AcquisitionTab" Header="设备采集">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="10,10,10,6">
@@ -94,6 +107,7 @@
                                             <TextBlock Text="{Binding StateText}" Foreground="#337AB7" Margin="0,0,0,8" />
                                             <UniformGrid Columns="2">
                                                 <Button Content="回零" Command="{Binding HomeCommand}"
+                                                        IsEnabled="{Binding CanOperate}"
                                                         Padding="0,6" Margin="0,0,4,4" />
                                                 <Button Content="停止" Command="{Binding StopCommand}"
                                                         Padding="0,6" Margin="4,0,0,4" />
@@ -102,10 +116,12 @@
                                                 <Button Content="Jog ◀ 按住" Tag="-1"
                                                         PreviewMouseLeftButtonDown="JogButton_Down"
                                                         PreviewMouseLeftButtonUp="JogButton_Up"
+                                                        IsEnabled="{Binding CanOperate}"
                                                         Padding="0,6" Margin="0,0,4,8" />
                                                 <Button Content="Jog ▶ 按住" Tag="1"
                                                         PreviewMouseLeftButtonDown="JogButton_Down"
                                                         PreviewMouseLeftButtonUp="JogButton_Up"
+                                                        IsEnabled="{Binding CanOperate}"
                                                         Padding="0,6" Margin="4,0,0,8" />
                                             </UniformGrid>
                                             <UniformGrid Columns="2" Margin="0,0,0,4">
@@ -118,7 +134,9 @@
                                                     <TextBox Text="{Binding SpeedInput, UpdateSourceTrigger=PropertyChanged}" />
                                                 </StackPanel>
                                             </UniformGrid>
-                                            <Button Content="定位运动" Command="{Binding MoveAbsoluteCommand}" Padding="0,6" />
+                                            <Button Content="定位运动" Command="{Binding MoveAbsoluteCommand}"
+                                                    IsEnabled="{Binding CanOperate}"
+                                                    Padding="0,6" />
                                             <TextBlock Text="{Binding ErrorText}"
                                                        Foreground="#D9534F" FontSize="11"
                                                        TextWrapping="Wrap" Margin="0,4,0,0" />
@@ -136,7 +154,8 @@
         </TabItem>
         <TabItem x:Name="VisionTab" Header="视觉定位">
             <DockPanel Margin="10">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10"
+                            IsEnabled="{Binding CanOperateVision}">
                     <Button Content="连接相机"
                             Command="{Binding ConnectCameraCommand}"
                             Padding="16,6" Margin="0,0,8,0" />
@@ -309,4 +328,5 @@
             </DockPanel>
         </TabItem>
     </TabControl>
+    </DockPanel>
 </Window>

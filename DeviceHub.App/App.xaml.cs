@@ -3,6 +3,7 @@ using System.Windows;
 using DeviceHub.App.ViewModels;
 using DeviceHub.Core.Configuration;
 using DeviceHub.Core.History;
+using DeviceHub.Core.Security;
 using DeviceHub.Storage.History;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -42,6 +43,12 @@ public partial class App : Application
         builder.Services.Configure<ReconnectConfig>(builder.Configuration.GetSection("Reconnect"));
         builder.Services.Configure<AlarmConfig>(builder.Configuration.GetSection("Alarms"));
         builder.Services.Configure<StorageConfig>(builder.Configuration.GetSection("Storage"));
+        builder.Services.Configure<AuthConfig>(builder.Configuration.GetSection("Auth"));
+        builder.Services.AddSingleton<AuthService>(sp =>
+        {
+            var config = sp.GetRequiredService<IOptions<AuthConfig>>().Value;
+            return new AuthService([.. config.Users.Select(u => u.ToUser())]);
+        });
         builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddSingleton<MotionViewModel>();
         builder.Services.AddSingleton<VisionViewModel>();
@@ -73,6 +80,18 @@ public partial class App : Application
 
         _host = builder.Build();
 
+        // 登录门：模态登录成功才进主界面；关闭登录窗 = 放弃使用，应用直接退出
+        var authService = _host.Services.GetRequiredService<AuthService>();
+        var loginWindow = new LoginWindow(authService);
+        if (loginWindow.ShowDialog() != true)
+        {
+            Log.Information("登录窗口被关闭，应用退出");
+            _host.Dispose();
+            _host = null;
+            Shutdown();
+            return;
+        }
+
         var mainViewModel = _host.Services.GetRequiredService<MainViewModel>();
         var motionViewModel = _host.Services.GetRequiredService<MotionViewModel>();
         var visionViewModel = _host.Services.GetRequiredService<VisionViewModel>();
@@ -90,7 +109,8 @@ public partial class App : Application
             motionViewModel,
             visionViewModel,
             curveViewModel,
-            alarmViewModel);
+            alarmViewModel,
+            authService);
         MainWindow = mainWindow;
         mainWindow.Show();
 

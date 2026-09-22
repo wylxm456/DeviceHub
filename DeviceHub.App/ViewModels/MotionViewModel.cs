@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceHub.Core.Configuration;
 using DeviceHub.Core.Motion;
+using DeviceHub.Core.Security;
 using DeviceHub.Drivers;
 using Microsoft.Extensions.Options;
 
@@ -12,6 +13,8 @@ namespace DeviceHub.App.ViewModels;
 /// <summary>
 /// 单轴卡片：位置实时轮询 + 回零/Jog/定位/停止操作。
 /// 软限位与安全联锁的拒绝信息统一冒泡到 MotionViewModel 的错误栏。
+/// CanOperate 是权限门禁（MotionControl 权限）：回零/Jog/定位的按钮可用性随之；
+/// "停止"是安全操作不做门禁——任何时刻都必须能停。
 /// </summary>
 public partial class AxisViewModel : ObservableObject
 {
@@ -39,6 +42,10 @@ public partial class AxisViewModel : ObservableObject
 
     [ObservableProperty]
     private string _speedInput;
+
+    /// <summary>运动操作权限（回零/Jog/定位）。急停与停止不受此约束。</summary>
+    [ObservableProperty]
+    private bool _canOperate;
 
     public AxisViewModel(IMotionControl control, MotionAxisConfig config)
     {
@@ -139,6 +146,7 @@ public partial class AxisViewModel : ObservableObject
 public partial class MotionViewModel : ObservableObject
 {
     private readonly MotionConfig _config;
+    private readonly AuthService _session;
     private readonly System.Windows.Threading.DispatcherTimer _pollTimer;
     private IMotionControl? _control;
     private bool _polling;
@@ -173,14 +181,28 @@ public partial class MotionViewModel : ObservableObject
     [ObservableProperty]
     private string _errorMessage = string.Empty;
 
-    public MotionViewModel(IOptions<MotionConfig> options)
+    public MotionViewModel(IOptions<MotionConfig> options, AuthService session)
     {
         _config = options.Value;
+        _session = session;
         _pollTimer = new System.Windows.Threading.DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(100),
         };
         _pollTimer.Tick += async (_, _) => await PollStatusAsync().ConfigureAwait(true);
+
+        // 会话变化（登录/登出/切换）即时刷新全部轴卡片的操作权限
+        _session.CurrentUserChanged += RefreshCanOperate;
+        RefreshCanOperate();
+    }
+
+    private void RefreshCanOperate()
+    {
+        var can = _session.HasPermission(Permission.MotionControl);
+        foreach (var axis in Axes)
+        {
+            axis.CanOperate = can;
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanConnect))]
@@ -195,7 +217,12 @@ public partial class MotionViewModel : ObservableObject
             Axes.Clear();
             foreach (var axisConfig in _config.Axes)
             {
-                Axes.Add(new AxisViewModel(_control, axisConfig));
+                var axis = new AxisViewModel(_control, axisConfig)
+                {
+                    // 新建的轴卡片按当前会话权限初始化（登录后才连接的场景）
+                    CanOperate = _session.HasPermission(Permission.MotionControl),
+                };
+                Axes.Add(axis);
             }
 
             RaiseAxisLookups();

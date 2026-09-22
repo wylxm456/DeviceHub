@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using DeviceHub.App.ViewModels;
+using DeviceHub.Core.Security;
 using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView.WPF;
 
@@ -10,13 +11,15 @@ namespace DeviceHub.App;
 public partial class MainWindow : Window
 {
     private bool _curveChartCreated;
+    private readonly AuthService _auth;
 
     public MainWindow(
         MainViewModel mainViewModel,
         MotionViewModel motionViewModel,
         VisionViewModel visionViewModel,
         CurveViewModel curveViewModel,
-        AlarmViewModel alarmViewModel)
+        AlarmViewModel alarmViewModel,
+        AuthService auth)
     {
         InitializeComponent();
         AcquisitionTab.DataContext = mainViewModel;
@@ -24,6 +27,30 @@ public partial class MainWindow : Window
         VisionTab.DataContext = visionViewModel;
         CurveTab.DataContext = curveViewModel;
         AlarmTab.DataContext = alarmViewModel;
+        _auth = auth;
+
+        // 会话栏随登录/登出/切换刷新；锁定期间模态登录窗天然挡住主界面操作
+        _auth.CurrentUserChanged += RefreshCurrentUser;
+        RefreshCurrentUser();
+    }
+
+    private void RefreshCurrentUser()
+    {
+        var user = _auth.CurrentUser;
+        Dispatcher.Invoke(() =>
+        {
+            CurrentUserText.Text = user is null
+                ? "未登录"
+                : $"当前用户：{user.Username}（{user.Role switch { UserRole.Engineer => "工程师", _ => "操作员" }}）";
+        });
+    }
+
+    /// <summary>锁定/切换用户：模态登录窗挡住主界面，成功则切换会话，取消则保持原会话。</summary>
+    private void LockButton_Click(object sender, RoutedEventArgs e)
+    {
+        var login = new LoginWindow(_auth) { Owner = this };
+        login.ShowDialog();
+        RefreshCurrentUser();
     }
 
     /// <summary>

@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeviceHub.Core.Configuration;
 using DeviceHub.Core.Motion;
+using DeviceHub.Core.Security;
 using DeviceHub.Vision;
 using Microsoft.Extensions.Options;
 using OpenCvSharp;
@@ -52,13 +53,21 @@ public partial class VisionViewModel : ObservableObject
     [ObservableProperty]
     private string _errorMessage = string.Empty;
 
-    public VisionViewModel(IOptions<VisionConfig> options, MotionViewModel motion)
+    public VisionViewModel(IOptions<VisionConfig> options, MotionViewModel motion, AuthService session)
     {
         _config = options.Value;
         _motion = motion;
         _previewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         _previewTimer.Tick += async (_, _) => await CapturePreviewAsync().ConfigureAwait(true);
+
+        // 视觉整页操作（连接/定位/标定/引导）需要 VisionGuide 权限；会话变化即时刷新
+        CanOperateVision = session.HasPermission(Permission.VisionGuide);
+        session.CurrentUserChanged += () => CanOperateVision = session.HasPermission(Permission.VisionGuide);
     }
+
+    /// <summary>视觉操作权限门禁：整页按钮的可用性随之（操作员只读预览之外的提示）。</summary>
+    [ObservableProperty]
+    private bool _canOperateVision;
 
     [RelayCommand(CanExecute = nameof(CanConnect))]
     private async Task ConnectCameraAsync()

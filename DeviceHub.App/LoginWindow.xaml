@@ -1,0 +1,21 @@
+<Window x:Class="DeviceHub.App.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DeviceHub 登录"
+        Width="360" Height="250"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowStyle="ToolWindow">
+    <StackPanel Margin="24,18">
+        <TextBlock Text="DeviceHub 登录" FontSize="18" FontWeight="Bold" Margin="0,0,0,14" />
+        <TextBlock Text="用户名" />
+        <TextBox x:Name="UsernameBox" Margin="0,3,0,10" Padding="2" />
+        <TextBlock Text="密码" />
+        <PasswordBox x:Name="PasswordBox" Margin="0,3,0,12" Padding="2" KeyDown="PasswordBox_KeyDown" />
+        <Button Content="登  录" Click="Login_Click" Padding="0,6" IsDefault="True" />
+        <TextBlock x:Name="ErrorText"
+                   Foreground="#D9534F"
+                   Margin="0,10,0,0"
+                   TextWrapping="Wrap" />
+    </StackPanel>
+</Window>

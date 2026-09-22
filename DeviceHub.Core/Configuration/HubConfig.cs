@@ -1,5 +1,6 @@
 using DeviceHub.Core.Alarming;
 using DeviceHub.Core.Models;
+using DeviceHub.Core.Security;
 
 namespace DeviceHub.Core.Configuration;
 
@@ -111,6 +112,34 @@ public sealed class MotionConfig
     public string DriverType { get; set; } = "SimMotion";
 
     public List<MotionAxisConfig> Axes { get; set; } = [];
+}
+
+/// <summary>一条登录账号的配置（JSON 反序列化目标）。</summary>
+public sealed class AuthUserConfig
+{
+    public string Username { get; set; } = string.Empty;
+
+    /// <summary>明文，或 "sha256:十六进制哈希"（AuthService 按前缀自动识别）。</summary>
+    public string Password { get; set; } = string.Empty;
+
+    /// <summary>角色：Operator / Engineer。</summary>
+    public string Role { get; set; } = "Operator";
+
+    public AuthUser ToUser() => new(
+        Username,
+        Password,
+        Role.Trim().ToLowerInvariant() switch
+        {
+            "operator" => UserRole.Operator,
+            "engineer" => UserRole.Engineer,
+            _ => throw new FormatException($"账号“{Username}”的角色无法识别：{Role}（支持 Operator/Engineer）"),
+        });
+}
+
+/// <summary>登录账号配置（绑定 appsettings.json 的 Auth 节）。</summary>
+public sealed class AuthConfig
+{
+    public List<AuthUserConfig> Users { get; set; } = [];
 }
 
 /// <summary>一条报警规则的配置（JSON 反序列化目标），字符串字段在 ToRule 时解析并校验。</summary>
