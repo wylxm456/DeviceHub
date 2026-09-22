@@ -4,6 +4,7 @@ using DeviceHub.App.ViewModels;
 using DeviceHub.Core.Configuration;
 using DeviceHub.Core.History;
 using DeviceHub.Core.Security;
+using DeviceHub.Northbound.Mqtt;
 using DeviceHub.Northbound.OpcUa;
 using DeviceHub.Storage.History;
 using Microsoft.Extensions.DependencyInjection;
@@ -86,6 +87,11 @@ public partial class App : Application
             new OpcUaNorthboundService(sp.GetRequiredService<IOptions<NorthboundConfig>>().Value.OpcUaPort));
         builder.Services.AddHostedService(sp => sp.GetRequiredService<OpcUaNorthboundService>());
 
+        // MQTT 北向：嵌入式 Broker + 发布客户端（遗嘱+保留消息），采集流推 JSON
+        builder.Services.AddSingleton<MqttNorthboundService>(sp =>
+            new MqttNorthboundService(sp.GetRequiredService<IOptions<NorthboundConfig>>().Value.MqttPort));
+        builder.Services.AddHostedService(sp => sp.GetRequiredService<MqttNorthboundService>());
+
         _host = builder.Build();
 
         // 登录门：模态登录成功才进主界面；关闭登录窗 = 放弃使用，应用直接退出
@@ -116,6 +122,10 @@ public partial class App : Application
         var opcUa = _host.Services.GetRequiredService<OpcUaNorthboundService>();
         mainViewModel.AcquisitionStarted += points => opcUa.EnsurePoints(points.Select(p => p.Name));
         mainViewModel.PointUpdated += opcUa.UpdateFrom;
+
+        // MQTT 北向：读数进发布队列（单读者后台泵），devicehub/points/{点位} 推 JSON
+        var mqtt = _host.Services.GetRequiredService<MqttNorthboundService>();
+        mainViewModel.PointUpdated += mqtt.UpdateFrom;
 
         var mainWindow = new MainWindow(
             mainViewModel,
