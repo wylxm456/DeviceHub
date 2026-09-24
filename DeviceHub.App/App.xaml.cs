@@ -137,6 +137,12 @@ public partial class App : Application
         MainWindow = mainWindow;
         mainWindow.Show();
 
+        // ShutdownMode=OnExplicitShutdown（见 App.xaml）：登录对话框关闭那一刻应用里
+        // 恰好没有窗口，默认的 OnLastWindowClose 会在此时排队关闭整个应用——主窗口
+        // Show 了也会被随即关掉（"登录后什么都没出来"的根因）。改为显式关闭后，
+        // 必须自己定义退出点：主窗口关闭 = 用户要退出
+        mainWindow.Closed += (_, _) => Shutdown();
+
         // 启动托管服务（历史落库/OPC UA/MQTT）。绝不在 UI 线程等待启动完成——
         // 之前用 GetResult 同步等，宿主启动慢时（首次证书/防火墙/环境差异）主窗口
         // 整段冻结，用户看到的就是"登录后没反应"。改为后台启动：
