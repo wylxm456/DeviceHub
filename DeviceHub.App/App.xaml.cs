@@ -137,14 +137,28 @@ public partial class App : Application
         MainWindow = mainWindow;
         mainWindow.Show();
 
-        // 启动托管服务（HistoryRecorder 的后台冲刷循环从这里开始跑）
-        _host.StartAsync().GetAwaiter().GetResult();
+        // 启动托管服务。必须经线程池：OPC UA/MQTT 的 StartAsync 内部有 await，
+        // 若在 UI 线程上同步等待启动完成，服务的续延会被投递回已阻塞的
+        // SynchronizationContext——经典单线程死锁（实测：登录后主界面永不出现，
+        // dotnet.exe 挂死）。线程池启动则 UI 线程只被占用启动所需的极短时间
+        Task.Run(() =>
+        {
+            _host.StartAsync().GetAwaiter().GetResult();
+            Log.Information("Host 已启动：历史落库/OPC UA(4840)/MQTT(1883) 全部就绪");
+        }).GetAwaiter().GetResult();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // 与启动同理：停机冲刷也走线程池，防止同类死锁卡住退出路径；
         // StopAsync 让 HistoryRecorder 做最后一次冲刷，把队列尾数落库后再退出
-        _host?.StopAsync().GetAwaiter().GetResult();
+        Task.Run(() =>
+        {
+            if (_host is { } host)
+            {
+                host.StopAsync().GetAwaiter().GetResult();
+            }
+        }).GetAwaiter().GetResult();
         _host?.Dispose();
         Log.CloseAndFlush();
         base.OnExit(e);
