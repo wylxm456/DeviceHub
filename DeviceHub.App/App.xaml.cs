@@ -137,28 +137,44 @@ public partial class App : Application
         MainWindow = mainWindow;
         mainWindow.Show();
 
-        // 启动托管服务。必须经线程池：OPC UA/MQTT 的 StartAsync 内部有 await，
-        // 若在 UI 线程上同步等待启动完成，服务的续延会被投递回已阻塞的
-        // SynchronizationContext——经典单线程死锁（实测：登录后主界面永不出现，
-        // dotnet.exe 挂死）。线程池启动则 UI 线程只被占用启动所需的极短时间
-        Task.Run(() =>
+        // 启动托管服务（历史落库/OPC UA/MQTT）。绝不在 UI 线程等待启动完成——
+        // 之前用 GetResult 同步等，宿主启动慢时（首次证书/防火墙/环境差异）主窗口
+        // 整段冻结，用户看到的就是"登录后没反应"。改为后台启动：
+        // 采集/曲线/报警/落库队列都不依赖宿主就绪，北向晚几秒上线无感知；
+        // 失败只记日志——北向挂了不该拖死整个采集端
+        _ = Task.Run(() =>
         {
-            _host.StartAsync().GetAwaiter().GetResult();
-            Log.Information("Host 已启动：历史落库/OPC UA(4840)/MQTT(1883) 全部就绪");
-        }).GetAwaiter().GetResult();
+            try
+            {
+                _host.StartAsync().GetAwaiter().GetResult();
+                Log.Information("Host 已启动：历史落库/OPC UA(4840)/MQTT(1883) 全部就绪");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Host 启动失败——北向与历史落库不可用，其余功能不受影响");
+            }
+        });
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
-        // 与启动同理：停机冲刷也走线程池，防止同类死锁卡住退出路径；
-        // StopAsync 让 HistoryRecorder 做最后一次冲刷，把队列尾数落库后再退出
-        Task.Run(() =>
+        // 停机冲刷走线程池防死锁（同上）；退出可以等——把队列尾数落完再关。
+        // 冲刷失败只记日志，不能卡死退出路径
+        try
         {
-            if (_host is { } host)
+            Task.Run(() =>
             {
-                host.StopAsync().GetAwaiter().GetResult();
-            }
-        }).GetAwaiter().GetResult();
+                if (_host is { } host)
+                {
+                    host.StopAsync().GetAwaiter().GetResult();
+                }
+            }).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "停机冲刷失败（可能有少量尾部数据未落库）");
+        }
+
         _host?.Dispose();
         Log.CloseAndFlush();
         base.OnExit(e);
