@@ -50,6 +50,7 @@ public partial class CurveViewModel : ObservableObject
     private readonly int _capacity;
     private readonly IPointHistoryStore _pointHistoryStore;
     private readonly IHistoryExporter _exporter;
+    private readonly int _maxQueryRows;
     private IReadOnlyList<PointHistoryRecord> _lastQuery = [];
 
     public CurveViewModel(

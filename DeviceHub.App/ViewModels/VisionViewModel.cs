@@ -61,12 +61,24 @@ public partial class VisionViewModel : ObservableObject
         _motion = motion;
 
         // 定位器按配置插拔：OpenCv 轮廓定位（默认）或 Halcon 形状匹配——
-        // IVisionLocator 之下标定/引导/界面全复用，换实现只改这一处
-        (_locator, _locatorName) = _config.Locator?.Trim().ToLowerInvariant() switch
+        // IVisionLocator 之下标定/引导/界面全复用，换实现只改这一处。
+        // 用显式分支而非 switch 元组解构：两侧是不同具体类型，元组无自然类型，
+        // 依赖编译器推断的写法在新语言版本下会翻车（实测）
+        IVisionLocator locator;
+        string locatorName;
+        if (string.Equals(_config.Locator?.Trim(), "halcon", StringComparison.OrdinalIgnoreCase))
         {
-            "halcon" => (new HalconVisionLocator(_config), "Halcon 形状匹配"),
-            _ => (new VisionLocator(), "OpenCv 轮廓"),
-        };
+            locator = new HalconVisionLocator(_config);
+            locatorName = "Halcon 形状匹配";
+        }
+        else
+        {
+            locator = new VisionLocator();
+            locatorName = "OpenCv 轮廓";
+        }
+
+        _locator = locator;
+        _locatorName = locatorName;
 
         _previewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         _previewTimer.Tick += async (_, _) => await CapturePreviewAsync().ConfigureAwait(true);
